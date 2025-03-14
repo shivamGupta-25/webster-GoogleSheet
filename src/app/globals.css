@@ -126,3 +126,16 @@
   }
 }
 
+/* Custom Swiper Styles */
+.swiper-cards {
+  overflow: visible;
+}
+
+.swiper-slide {
+  transition: transform 0.3s ease;
+}
+
+.swiper-slide-active {
+  z-index: 10;
+}
+

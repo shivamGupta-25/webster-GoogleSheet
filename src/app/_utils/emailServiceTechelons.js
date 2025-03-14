@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { getEventById, getWhatsAppGroupLink, formatEventDateTime } from '@/app/_data/techelonsEventsData';
+import { getEventById, getWhatsAppGroupLink, formatEventDateTime } from '@/app/_data/techelonsData';
 
 // Singleton transporter instance
 let cachedTransporter = null;
@@ -383,7 +383,7 @@ export const generateEmailTemplate = ({ name, eventDetails, whatsappLink }) => {
               
               ${teamSize ? `
               <div style="display: flex; align-items: flex-start; margin-bottom: 12px;">
-                <span style="color: #4f46e5; font-weight: 500; min-width: 100px;">👥 Team Size:</span>
+                <span style="color: #4f46e5; font-weight: 500; min-width: 100px;">�� Team Size:</span>
                 <span>${teamSize}</span>
               </div>
               ` : ''}
@@ -489,7 +489,6 @@ export const sendTechelonsConfirmation = async ({
     // If whatsappLink is not provided, try to get it from the event data
     if (!whatsappLink) {
       try {
-        const { getWhatsAppGroupLink } = require('../_data/techelonsEventsData');
         whatsappLink = getWhatsAppGroupLink(event);
       } catch (error) {
         console.warn('Could not fetch WhatsApp group link:', error.message);

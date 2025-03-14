@@ -3,8 +3,10 @@
 import { useEffect, useCallback, useMemo, memo, lazy, Suspense } from "react"
 import PropTypes from 'prop-types'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { formatEventDateTime, getImagePath, getCategoryStyle } from "@/app/_data/techelonsEventsData"
+import { formatEventDateTime, getImagePath, registrationStatus } from "@/app/_data/techelonsData"
+import { getCategoryStyle } from "./constants"
 import { useShareEvent, useImageHandling } from "./hooks"
+import { getEffectiveRegistrationStatus } from "./utils"
 
 // Lazy loaded components with appropriate chunk names
 const EventImage = lazy(() => import('./EventImage' /* webpackChunkName: "event-image" */));
@@ -68,6 +70,13 @@ const EventModal = memo(({ event, isOpen, onClose }) => {
   // Handle registration button click
   const handleRegister = useCallback(() => {
     if (!event) return;
+
+    // Check if registration is open using the utility function
+    const effectiveStatus = getEffectiveRegistrationStatus(event);
+    if (effectiveStatus !== registrationStatus.OPEN) {
+      // If registration is closed, don't open the registration page
+      return;
+    }
 
     if (event.registrationLink) {
       window.open(event.registrationLink, "_blank", "noopener,noreferrer");

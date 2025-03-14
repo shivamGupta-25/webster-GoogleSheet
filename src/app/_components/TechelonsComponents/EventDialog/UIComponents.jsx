@@ -2,7 +2,7 @@ import { memo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ICON_MAP, STATUS_CONFIG } from "./constants";
-import { getEffectiveRegistrationStatus } from "@/app/_data/techelonsEventsData";
+import { getEffectiveRegistrationStatus } from "./utils";
 
 // UI Components
 export const SectionHeading = memo(({ icon, children }) => (
@@ -49,8 +49,9 @@ export const InfoCard = memo(({ icon, title, children, className }) => (
 InfoCard.displayName = "InfoCard";
 
 // Registration status component
-export const RegistrationStatus = memo(({ status }) => {
-  const effectiveStatus = getEffectiveRegistrationStatus(status);
+export const RegistrationStatus = memo(({ status, event }) => {
+  // Use the utility function to get the effective status
+  const effectiveStatus = event ? getEffectiveRegistrationStatus(event) : (status || "closed");
   const config = STATUS_CONFIG[effectiveStatus] || STATUS_CONFIG.closed;
 
   return (

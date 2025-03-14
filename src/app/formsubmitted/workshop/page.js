@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Instagram, Linkedin, Home, Check, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
-import workshopData from "@/app/_data/workshopData"
+import siteContent from '@/app/_data/siteContent'
 import confetti from 'canvas-confetti'
 
 const SuccessIcon = () => (
@@ -61,7 +61,7 @@ const RegistrationContent = () => {
     const router = useRouter()
     const searchParams = useSearchParams()
     const [whatsappLink, setWhatsappLink] = useState("")
-    const { socialMedia } = workshopData;
+    const { socialMedia } = siteContent;
 
     // Set WhatsApp link after component mounts to avoid hydration mismatch
     useEffect(() => {
@@ -100,7 +100,7 @@ const RegistrationContent = () => {
             if (emailRegex.test(email)) {
                 console.log('Email validation passed');
                 setIsValid(true)
-                setWhatsappLink(workshopData.whatsappGroupLink)
+                setWhatsappLink(siteContent.workshop.whatsappGroupLink)
                 triggerConfetti()
             } else {
                 console.log('Email validation failed');
@@ -247,7 +247,7 @@ const RegistrationContent = () => {
                                     className="bg-gray-50 p-3 sm:p-4 rounded-lg sm:rounded-xl mb-4 sm:mb-5 md:mb-6 text-left"
                                 >
                                     <div className="grid grid-cols-1 gap-1 sm:gap-2">
-                                        {workshopData.details.slice(0, 3).map((detail) => (
+                                        {siteContent.workshop.details.slice(0, 3).map((detail) => (
                                             <div key={detail.id} className="flex items-start">
                                                 <span className="text-xs sm:text-sm md:text-base text-gray-800 font-medium mr-1 sm:mr-2">{detail.label}</span>
                                                 <span className="text-xs sm:text-sm md:text-base text-gray-600 flex-1">{detail.value}</span>

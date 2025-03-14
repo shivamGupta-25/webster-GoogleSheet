@@ -2,7 +2,10 @@ import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
 import { NextResponse } from 'next/server';
 import { sendWorkshopConfirmation } from '@/app/_utils/emailServiceWorkshop';
-import workshopData from '@/app/_data/workshopData';
+import siteContent from '@/app/_data/siteContent';
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Scopes and environment variables
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
@@ -207,7 +210,7 @@ const validateRequestData = (data) => {
 const sendConfirmationEmail = async (data) => {
     try {
         const { email, name } = data;
-        const { subject, template } = workshopData.emailNotification;
+        const { subject, template } = siteContent.workshop.emailNotification;
         
         console.log(`Sending workshop confirmation email to ${email}`);
         
@@ -215,7 +218,7 @@ const sendConfirmationEmail = async (data) => {
             email,
             name,
             subject,
-            template: template(name)
+            template: template(name, siteContent.workshop)
         });
 
         if (emailResult.success) {
@@ -297,7 +300,7 @@ export async function POST(req) {
                         message: "You are already registered",
                         alreadyRegistered: true,
                         registrationToken,
-                        whatsappLink: workshopData.whatsappGroupLink
+                        whatsappLink: siteContent.workshop.whatsappGroupLink
                     },
                     { status: 200 }
                 );
@@ -362,7 +365,7 @@ export async function POST(req) {
             success: true,
             message: "Registration successful",
             timestamp,
-            whatsappLink: workshopData.whatsappGroupLink,
+            whatsappLink: siteContent.workshop.whatsappGroupLink,
             registrationToken: Buffer.from(data.email).toString('base64'),
             emailSent: emailResult.success
         };

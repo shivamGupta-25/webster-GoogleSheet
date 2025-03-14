@@ -1,7 +1,7 @@
 import { useState, useEffect, lazy, Suspense, useCallback, useMemo, memo } from "react";
 import { useRouter } from "next/navigation";
 import PropTypes from 'prop-types';
-import { isRegistrationOpen, getRegistrationStatusMessage } from "@/app/_data/techelonsEventsData";
+import { festInfo } from "@/app/_data/techelonsData";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
     FeatureCardSkeleton,
@@ -67,12 +67,11 @@ function throttle(func, delay) {
 // Custom hook for registration status
 const useRegistrationStatus = () => {
     return useMemo(() => {
-        const regStatus = isRegistrationOpen();
-        const statusObj = getRegistrationStatusMessage();
+        const regStatus = festInfo.registrationEnabled;
         
         return {
             registrationOpen: regStatus,
-            statusMessage: statusObj.message
+            statusMessage: regStatus ? "Registration Open" : "Registration Closed"
         };
     }, []);
 };
@@ -94,8 +93,8 @@ FeatureCard.propTypes = {
 
 FeatureCard.displayName = 'FeatureCard';
 
-// Features data
-const FEATURES = [
+// Default features data
+const DEFAULT_FEATURES = [
     {
         title: "Competitions",
         icon: "🏆",
@@ -123,6 +122,43 @@ const TechelonsMain = () => {
     const [shouldRender3D, setShouldRender3D] = useState(false);
     const [reducedQuality, setReducedQuality] = useState(false);
     const [contentLoaded, setContentLoaded] = useState(false);
+    
+    // State for content from CMS
+    const [techelonsContent, setTechelonsContent] = useState({
+        title: "Techelons'25",
+        subtitle: "Shivaji College's premier technical festival, where innovation meets creativity.",
+        festDate: "April 2025",
+        aboutTitle: "About Techelons",
+        aboutParagraphs: [
+            "Techelons is the annual tech fest by Websters, the CS Society of Shivaji College, DU. It's where students showcase technical skills through competitions, hackathons, and coding challenges.",
+            "Beyond competitions, Techelons features expert-led seminars on emerging tech and industry trends. The fest promotes networking and collaboration among students and professionals in a celebration of technological innovation."
+        ],
+        exploreTitle: "Explore the Future of Technology",
+        exploreDescription: "Join us for two days of innovation, competition, and creativity at Shivaji College. Showcase your skills and connect with tech enthusiasts from across the nation.",
+        features: DEFAULT_FEATURES
+    });
+
+    // Fetch content from API or use default
+    useEffect(() => {
+        const fetchTechelonsContent = async () => {
+            try {
+                const response = await fetch('/api/techelons');
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Check if there's UI content in the response
+                    if (data.uiContent) {
+                        setTechelonsContent(data.uiContent);
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching Techelons content:", error);
+                // Keep using default content on error
+            }
+        };
+        
+        fetchTechelonsContent();
+    }, []);
 
     // Handle registration button click
     const handleRegistration = useCallback(() => {
@@ -298,7 +334,7 @@ const TechelonsMain = () => {
                         <div className="absolute inset-0 flex items-center justify-center p-4 md:p-8 z-100 pointer-events-none">
                             <div className="text-white text-center">
                                 <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">Tech<span className="text-blue-400">elons</span></div>
-                                <div className="text-sm sm:text-base md:text-lg lg:text-xl text-blue-200 mb-2 sm:mb-3 md:mb-4 lg:mb-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">April 2025</div>
+                                <div className="text-sm sm:text-base md:text-lg lg:text-xl text-blue-200 mb-2 sm:mb-3 md:mb-4 lg:mb-6 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{techelonsContent.festDate}</div>
                                 {isLoading && (
                                     <div className="text-xs md:text-sm bg-gradient-to-r from-blue-300 to-indigo-300 bg-clip-text text-transparent font-medium tracking-wide animate-pulse">
                                         Interactive 3D Experience Loading
@@ -310,7 +346,7 @@ const TechelonsMain = () => {
                 )}
             </div>
         );
-    }, [isMobile, scene3D, isLoading, spotlightEffects, contentLoaded]);
+    }, [isMobile, scene3D, isLoading, spotlightEffects, contentLoaded, techelonsContent.festDate]);
 
     // Memoize the features section
     const featuresSection = useMemo(() => (
@@ -322,7 +358,7 @@ const TechelonsMain = () => {
                     <FeatureCardSkeleton />
                 </>
             ) : (
-                FEATURES.map((feature, index) => (
+                techelonsContent.features.map((feature, index) => (
                     <FeatureCard
                         key={`feature-${index}`}
                         icon={feature.icon}
@@ -332,7 +368,7 @@ const TechelonsMain = () => {
                 ))
             )}
         </div>
-    ), [contentLoaded]);
+    ), [contentLoaded, techelonsContent.features]);
 
     // Mobile-specific 3D alternative
     const mobileBanner = useMemo(() => {
@@ -353,14 +389,14 @@ const TechelonsMain = () => {
                         
                         <div className="relative text-center">
                             <div className="text-3xl sm:text-4xl font-bold mb-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] text-white">Tech<span className="text-blue-400">elons</span></div>
-                            <div className="text-base sm:text-lg text-blue-200 mb-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">April 2025</div>
+                            <div className="text-base sm:text-lg text-blue-200 mb-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{techelonsContent.festDate}</div>
                             <div className="text-white/80 text-sm">Shivaji College's Premier Tech Fest</div>
                         </div>
                     </div>
                 )}
             </div>
         );
-    }, [isMobile, contentLoaded]);
+    }, [isMobile, contentLoaded, techelonsContent.festDate]);
 
     // Memoize the about section
     const aboutSection = useMemo(() => (
@@ -368,17 +404,15 @@ const TechelonsMain = () => {
             <AboutSectionSkeleton />
         ) : (
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 sm:p-5 md:p-6 lg:p-8 shadow-xl border border-gray-100">
-                <h2 className="text-lg sm:text-xl md:text-2xl text-center font-bold text-gray-900 mb-2 sm:mb-3">About Techelons</h2>
-                <p className="text-gray-600 text-xs sm:text-sm md:text-base">
-                    Techelons is the annual tech fest by Websters, the CS Society of Shivaji College, DU. It's where students showcase technical skills through competitions, hackathons, and coding challenges.
-                </p>
-                <hr className="my-2" />
-                <p className="text-gray-600 text-xs sm:text-sm md:text-base">
-                    Beyond competitions, Techelons features expert-led seminars on emerging tech and industry trends. The fest promotes networking and collaboration among students and professionals in a celebration of technological innovation.
-                </p>
+                <h2 className="text-lg sm:text-xl md:text-2xl text-center font-bold text-gray-900 mb-2 sm:mb-3">{techelonsContent.aboutTitle}</h2>
+                {techelonsContent.aboutParagraphs.map((paragraph, index) => (
+                    <p key={`about-p-${index}`} className="text-gray-600 text-xs sm:text-sm md:text-base mb-2">
+                        {paragraph}
+                    </p>
+                ))}
             </div>
         )
-    ), [contentLoaded]);
+    ), [contentLoaded, techelonsContent.aboutTitle, techelonsContent.aboutParagraphs]);
 
     // Memoize the explore section
     const exploreSection = useMemo(() => (
@@ -386,10 +420,9 @@ const TechelonsMain = () => {
             <ExploreSectionSkeleton />
         ) : (
             <div className="bg-gradient-to-br from-indigo-900 to-blue-900 text-white rounded-2xl p-4 sm:p-5 md:p-6 lg:p-8 shadow-xl">
-                <h2 className="text-lg sm:text-xl md:text-2xl text-center font-bold mb-2 sm:mb-3">Explore the Future of Technology</h2>
+                <h2 className="text-lg sm:text-xl md:text-2xl text-center font-bold mb-2 sm:mb-3">{techelonsContent.exploreTitle}</h2>
                 <p className="text-indigo-100 mb-3 sm:mb-4 text-xs sm:text-sm md:text-base">
-                    Join us for two days of innovation, competition, and creativity at Shivaji College.
-                    Showcase your skills and connect with tech enthusiasts from across the nation.
+                    {techelonsContent.exploreDescription}
                 </p>
 
                 <div className="flex flex-col xs:flex-row justify-center items-center gap-2 sm:gap-3 mt-3 sm:mt-4">
@@ -410,7 +443,7 @@ const TechelonsMain = () => {
                 </div>
             </div>
         )
-    ), [handleRegistration, handleLearnMore, registrationOpen, contentLoaded]);
+    ), [handleRegistration, handleLearnMore, registrationOpen, contentLoaded, techelonsContent.exploreTitle, techelonsContent.exploreDescription]);
 
     // Memoize the heading section
     const headingSection = useMemo(() => (
@@ -427,17 +460,17 @@ const TechelonsMain = () => {
                 <>
                     <div className="inline-block relative">
                         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 leading-none">
-                            Techelons'25
+                            {techelonsContent.title}
                         </h1>
                         <div className="absolute -bottom-2 sm:-bottom-3 left-0 right-0 h-1 bg-gradient-to-r from-blue-600/0 via-purple-600 to-indigo-600/0 blur-sm" aria-hidden="true"></div>
                     </div>
                     <p className="mt-3 sm:mt-4 md:mt-5 lg:mt-6 text-gray-700 text-sm sm:text-base md:text-lg lg:text-xl max-w-2xl mx-auto">
-                        Shivaji College's premier technical festival, where innovation meets creativity.
+                        {techelonsContent.subtitle}
                     </p>
                 </>
             )}
         </div>
-    ), [contentLoaded]);
+    ), [contentLoaded, techelonsContent.title, techelonsContent.subtitle]);
 
     return (
         <section className="relative py-6 sm:py-8 md:py-10 overflow-hidden">

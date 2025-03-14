@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useRouter } from "next/navigation";
-import workshopData from '@/app/_data/workshopData';
+import siteContent from '@/app/_data/siteContent';
 
 // Memoized animation configurations
 const animations = {
@@ -38,7 +38,9 @@ const Workshop = () => {
   const router = useRouter();
 
   // Memoize workshop details to prevent unnecessary re-renders
-  const { title, shortDescription, details, bannerImage, isRegistrationOpen } = useMemo(() => workshopData, []);
+  const { title, shortDescription, details, bannerImage, isRegistrationOpen } = useMemo(() => {
+    return siteContent.workshop;
+  }, []);
 
   // Memoize event handler to prevent unnecessary re-renders
   const handleRegistration = useCallback(() => {
@@ -92,9 +94,9 @@ const Workshop = () => {
           </div>
 
           <div className="space-y-3 border-l-4 border-blue-500 pl-4">
-            {details.map((detail) => (
+            {details.map((detail, index) => (
               <DetailItem
-                key={detail.id}
+                key={index}
                 label={detail.label}
                 value={detail.value}
               />

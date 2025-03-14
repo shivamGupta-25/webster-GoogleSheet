@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Instagram, Linkedin, Home, Check, Calendar, Clock, MapPin, Users, Award, Info, ArrowLeft, Share2, Download, Mail, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
-import { getEventById, getWhatsAppGroupLink, formatEventDateTime, FEST_DATES } from "@/app/_data/techelonsEventsData"
+import { getEventById, getWhatsAppGroupLink, formatEventDateTime, festInfo } from "@/app/_data/techelonsData"
 import confetti from 'canvas-confetti'
 
 const SuccessIcon = () => (
@@ -380,7 +380,7 @@ const TechelonsRegistrationContent = () => {
     const { formattedDate, formattedTime, dayOfWeek } = eventDetails ? formatEventDateTime(eventDetails) : {};
 
     // Get registration deadline
-    const registrationDeadline = FEST_DATES.REGISTRATION_DEADLINE;
+    const registrationDeadline = festInfo.REGISTRATION_DEADLINE;
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4 sm:px-6 lg:px-8 py-8">

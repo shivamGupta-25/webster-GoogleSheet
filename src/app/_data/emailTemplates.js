@@ -1,28 +1,5 @@
-// Centralized workshop data for easy management
-const workshopData = {
-  title: "From Idea to Interfaces : A UI/UX foundation workshop",
-  shortDescription: "Join us for an exciting 2-day workshop on UI/UX Design, organized by the Websters - Computer Science Society of Shivaji College!",
-  isRegistrationOpen: true, // Set to true to open registration
-  formSubmittedLink: "/formsubmitted/workshop", // Link to the form submitted page for workshop
-  details: [
-    { label: '📅 Date:', value: '29th & 30th January, 2025', id: 'date' },
-    { label: '🕒 Time:', value: '10 AM - 2 PM', id: 'time' },
-    { label: '🏛️ Venue:', value: 'Jijabai Computer Lab', id: 'venue' },
-    {
-      label: '📖 Description:',
-      value: 'From Idea to Interfaces: A UI/UX Foundation Workshop is a 2-day event organized by the Websters - Computer Science Society of Shivaji College. The workshop will cover the basics of UI/UX design, including principles of user interfaces, user experience, wireframing, prototyping, and best design practices with an hands-on project. It\'s an exciting opportunity for beginners and design enthusiasts to learn essential skills for creating user-friendly digital experiences.',
-      id: 'description'
-    }
-  ],
-  bannerImage: "/assets/Events/UI-UX_Workshop.png",
-  whatsappGroupLink: "https://chat.whatsapp.com/workshop-group-link", // Replace with actual WhatsApp group link
-  socialMedia: {
-    instagram: "https://www.instagram.com/websters.shivaji/",
-    linkedin: "https://www.linkedin.com/company/websters-shivaji-college/"
-  },
-  emailNotification: {
-    subject: "Workshop Registration Confirmed - Websters",
-    template: (name) => `
+// Email templates for various notifications
+export const workshopRegistrationTemplate = (name) => `
         <div style="font-family: 'Inter', 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; background-color: #f9fafb; color: #374151;">
           <!-- Email Container -->
           <div style="background-color: #ffffff; border-radius: 16px; overflow: hidden; margin: 20px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
@@ -108,8 +85,4 @@ const workshopData = {
             </div>
           </div>
         </div>
-      `
-  }
-};
-
-export default workshopData;
+      `; 

@@ -16,7 +16,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { ICON_SIZE } from "./constants";
 import { SectionHeading, InfoCard, RegistrationStatus } from "./UIComponents";
-import { FEST_DAYS } from "@/app/_data/techelonsEventsData";
+import { festDays } from "@/app/_data/techelonsData";
 
 // Event details section
 export const EventDetails = memo(({ event, formattedDate, formattedTime, dayOfWeek }) => (
@@ -31,7 +31,7 @@ export const EventDetails = memo(({ event, formattedDate, formattedTime, dayOfWe
         <Calendar className="h-4 w-4 mr-2 text-primary flex-shrink-0 mt-0.5" />
         <div>
           <div className="font-medium text-primary">
-            {event.festDay === FEST_DAYS.DAY_1 ? "Day 1" : "Day 2"}
+            {event.festDay === festDays.DAY_1 ? "Day 1" : "Day 2"}
           </div>
           <div>{formattedDate} ({dayOfWeek})</div>
           <div>{formattedTime}</div>
@@ -72,7 +72,7 @@ export const EventDetails = memo(({ event, formattedDate, formattedTime, dayOfWe
         <div>
           <div className="font-medium">Registration</div>
           <div className="flex items-center">
-            <RegistrationStatus status={event.registrationStatus} />
+            <RegistrationStatus status={event.registrationStatus} event={event} />
           </div>
         </div>
       </div>

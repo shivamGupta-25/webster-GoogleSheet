@@ -11,58 +11,9 @@ import "swiper/css/autoplay";
 import { memo, useCallback, useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
+import siteContent from '@/app/_data/siteContent';
 
-// Council members data - kept outside component to prevent re-creation
-const councilMembers = [
-    {
-        name: "Shivani Singh",
-        role: "President",
-        image: "/assets/Council/Shivani Singh.jpg",
-        linkedin: null
-    },
-    {
-        name: "Jai Solanki",
-        role: "Vice-President",
-        image: "/assets/Council/Jai.JPG",
-        linkedin: "https://www.linkedin.com/in/jai-solanki-a84078295"
-    },
-    {
-        name: "Manish Pathak",
-        role: "Vice-President",
-        image: "/assets/Council/Manish Pathak.jpg",
-        linkedin: null
-    },
-    {
-        name: "Shivam Raj Gupta",
-        role: "Technical Head",
-        image: "/assets/Council/Shivam Raj Gupta.png",
-        linkedin: "https://www.linkedin.com/in/shivam-raj-gupta/"
-    },
-    {
-        name: "Keshav",
-        role: "Creative Head",
-        image: "/assets/Council/keshav.jpg",
-        linkedin: "https://www.linkedin.com/in/keshavjangra075?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app"
-    },
-    {
-        name: "Yugal",
-        role: "Secretary",
-        image: "/assets/Council/Yugal.jpg",
-        linkedin: "https://www.linkedin.com/in/yugalofficial"
-    },
-    {
-        name: "Prateek",
-        role: "PR & Social Media Head",
-        image: "/assets/Council/Prateek Tiwari.jpg",
-        linkedin: "https://www.linkedin.com/in/prateek-tiwari-a01243277?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app"
-    },
-    {
-        name: "Gaurav Rai",
-        role: "PR & Social Media Head",
-        image: "/assets/Council/Gaurav.jpg",
-        linkedin: "https://www.linkedin.com/in/gaurav-rai-228b32269?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app"
-    }
-];
+// Council members data - now imported from centralized content
 
 // Optimized blur data URL for image placeholders (smaller SVG)
 const BLUR_DATA_URL = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmMWYxZjEiLz48L3N2Zz4=";
@@ -226,6 +177,12 @@ const Council = () => {
         setIsMounted(true);
     }, []);
     
+    // Get council content from centralized data
+    const { title, description, members } = useMemo(() => siteContent.council, []);
+    
+    // Replace the hardcoded council members with the data from siteContent
+    const councilMembers = useMemo(() => members, [members]);
+    
     // Memoize the slider content to prevent unnecessary re-renders
     const renderSlides = useMemo(() => 
         councilMembers.map((member, index) => (
@@ -236,29 +193,23 @@ const Council = () => {
     []);
 
     return (
-        <section
-            id="council"
-            className="mb-8 px-4 max-w-[1400px] mx-auto overflow-hidden"
-            aria-labelledby="council-heading"
-        >
-            <motion.h1
-                id="council-heading"
-                className="text-center text-6xl sm:text-7xl lg:text-9xl font-extrabold text-gray-900 dark:text-white mb-8"
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, amount: 0.3 }}
-                variants={animations.title}
-            >
-                Council
-            </motion.h1>
-
-            {!isMounted ? (
-                <CouncilSkeleton />
-            ) : (
-                <Swiper {...SWIPER_CONFIG} className="w-full">
-                    {renderSlides}
-                </Swiper>
-            )}
+        <section className="py-12 md:py-24">
+            <div className="container px-4 md:px-6">
+                <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
+                    <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">{title}</h2>
+                    <p className="max-w-[700px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
+                        {description}
+                    </p>
+                </div>
+                
+                {!isMounted ? (
+                    <CouncilSkeleton />
+                ) : (
+                    <Swiper {...SWIPER_CONFIG} className="w-full">
+                        {renderSlides}
+                    </Swiper>
+                )}
+            </div>
         </section>
     );
 };

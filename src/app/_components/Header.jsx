@@ -6,8 +6,8 @@ import { Dialog } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import { useRouter, usePathname } from "next/navigation";
-import { isRegistrationOpen } from "@/app/_data/techelonsEventsData";
-import workshopData from "@/app/_data/workshopData";
+import { festInfo } from "@/app/_data/techelonsData";
+import siteContent from '@/app/_data/siteContent';
 
 // Animation configurations
 const animations = {
@@ -171,9 +171,12 @@ const HeaderContent = ({ children }) => {
     // Navigation to registration page
     const handleExit = useCallback(() => {
         // Check if techelons registration is open
-        const techelonsRegistrationOpen = isRegistrationOpen();
+        const techelonsRegistrationOpen = festInfo.registrationEnabled === true;
         // Check if workshop registration is open
-        const workshopRegistrationOpen = workshopData.isRegistrationOpen;
+        const workshopRegistrationOpen = siteContent.workshop.isRegistrationOpen === true;
+        
+        console.log("Techelons registration status:", festInfo.registrationEnabled);
+        console.log("Workshop registration status:", siteContent.workshop.isRegistrationOpen);
 
         if (techelonsRegistrationOpen && workshopRegistrationOpen) {
             // Both registrations are open, show a dialog or redirect to a page that lets the user choose

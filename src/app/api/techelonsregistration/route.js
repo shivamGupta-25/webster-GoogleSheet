@@ -2,7 +2,7 @@ import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
 import { NextResponse } from 'next/server';
 import { Readable } from 'stream';
-import { TECHELONS_EVENTS, getEventById, getWhatsAppGroupLink } from '@/app/_data/techelonsEventsData';
+import { events, getEventById, getWhatsAppGroupLink } from '@/app/_data/techelonsData';
 import { sendTechelonsConfirmation } from '@/app/_utils/emailServiceTechelons';
 import { validateFile, fileToBuffer, generateSanitizedFilename } from '@/app/_utils/fileUtils';
 

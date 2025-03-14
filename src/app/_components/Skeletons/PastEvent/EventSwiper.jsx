@@ -36,12 +36,17 @@ export const EventSwiper = React.memo(({ slides, isMobile, EventImage }) => {
         <div className="w-full max-w-[280px] xs:max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl">
           <Swiper {...swiperConfig}>
             {slides.map((slide, index) => (
-              <SwiperSlide key={slide.title} className="rounded-xl shadow-lg overflow-hidden bg-gray-800">
-                <EventImage 
-                  src={slide.imageUrl} 
-                  alt={slide.title} 
-                  priority={index < 1}
-                />
+              <SwiperSlide key={`${slide.title}-${index}`} className="rounded-xl shadow-lg overflow-hidden bg-gray-800">
+                <div className="relative">
+                  <EventImage 
+                    src={slide.imageUrl} 
+                    alt={slide.title} 
+                    priority={index < 1}
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                    <h3 className="text-white font-medium text-lg">{slide.title}</h3>
+                  </div>
+                </div>
               </SwiperSlide>
             ))}
           </Swiper>
@@ -49,11 +54,8 @@ export const EventSwiper = React.memo(({ slides, isMobile, EventImage }) => {
       </div>
 
       <div className="mt-6 sm:mt-8 text-center">
-        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 hidden sm:block">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
           Swipe to navigate through our past events
-        </p>
-        <p className="text-sm text-gray-600 dark:text-gray-400 sm:hidden">
-          Swipe to view more events
         </p>
       </div>
     </>

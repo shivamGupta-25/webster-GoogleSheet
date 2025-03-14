@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast, Toaster } from "react-hot-toast";
 import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import workshopData from "@/app/_data/workshopData";
+import siteContent from "@/app/_data/siteContent";
 
 // Email validation schema
 const emailSchema = z.string()
@@ -82,15 +82,15 @@ export default function RegistrationPage() {
     const [serverError, setServerError] = useState(null);
     const [isOnline, setIsOnline] = useState(true);
     
-    // Memoize workshop title to prevent unnecessary re-renders
-    const workshopTitle = useMemo(() => workshopData.title, []);
+    // Memoize workshop details to prevent unnecessary re-renders
+    const workshopDetails = useMemo(() => siteContent.workshop, []);
 
     // Redirect if registration is closed
     useEffect(() => {
-        if (!workshopData.isRegistrationOpen) {
+        if (!workshopDetails.isRegistrationOpen) {
             router.push('/registrationclosed');
         }
-    }, [router]);
+    }, [router, workshopDetails.isRegistrationOpen]);
 
     // Handle online status with useEffect to avoid hydration mismatch
     useEffect(() => {
@@ -195,7 +195,7 @@ export default function RegistrationPage() {
                         
                         // Redirect to the form submission page
                         setTimeout(() => {
-                            const redirectUrl = `${workshopData.formSubmittedLink}?token=${encodeURIComponent(result.registrationToken)}&alreadyRegistered=true`;
+                            const redirectUrl = `${workshopDetails.formSubmittedLink}?token=${encodeURIComponent(result.registrationToken)}&alreadyRegistered=true`;
                             window.location.href = redirectUrl;
                         }, 500);
                         return;
@@ -207,7 +207,7 @@ export default function RegistrationPage() {
                     
                     // Ensure redirection happens with a slight delay and proper URL
                     setTimeout(() => {
-                        const redirectUrl = `${workshopData.formSubmittedLink}?token=${encodeURIComponent(result.registrationToken)}`;
+                        const redirectUrl = `${workshopDetails.formSubmittedLink}?token=${encodeURIComponent(result.registrationToken)}`;
                         window.location.href = redirectUrl;
                     }, 500);
                     
@@ -269,7 +269,7 @@ export default function RegistrationPage() {
 
                     <form onSubmit={handleSubmit(handleRegistration)} className="space-y-6">
                         <div className="flex item-center justify-center px-3 py-2 border border-gray-300 rounded-md shadow-sm font-bold text-gray-700 text-lg">
-                            {workshopTitle}
+                            {workshopDetails.title}
                         </div>
 
                         {formFields.map(field => (

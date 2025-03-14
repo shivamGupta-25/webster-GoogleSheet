@@ -4,9 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { isRegistrationOpen } from "@/app/_data/techelonsEventsData";
-import workshopData from "@/app/_data/workshopData";
-import { FEST_DATES } from "@/app/_data/techelonsEventsData";
+import { festInfo } from "@/app/_data/techelonsData";
+import siteContent from "@/app/_data/siteContent";
 
 export default function RegisterOptions() {
   const router = useRouter();
@@ -14,8 +13,8 @@ export default function RegisterOptions() {
 
   // Check if both registrations are open, if not redirect to the appropriate page
   useEffect(() => {
-    const techelonsRegistrationOpen = isRegistrationOpen();
-    const workshopRegistrationOpen = workshopData.isRegistrationOpen;
+    const techelonsRegistrationOpen = festInfo.registrationEnabled;
+    const workshopRegistrationOpen = siteContent.workshop.isRegistrationOpen;
 
     if (!techelonsRegistrationOpen && !workshopRegistrationOpen) {
       router.push("/registrationclosed");
@@ -49,7 +48,7 @@ export default function RegisterOptions() {
           <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-t-lg p-4 sm:p-6">
             <CardTitle className="text-lg sm:text-xl">Workshop Registration</CardTitle>
             <CardDescription className="text-blue-100 text-sm sm:text-base">
-              {workshopData.title}
+              {siteContent.workshop.title}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-4 sm:pt-6 pb-2 sm:pb-4 flex-grow">
@@ -58,18 +57,18 @@ export default function RegisterOptions() {
                 <span className="text-blue-500 mr-2 mt-0.5">📅</span>
                 <div>
                   <p className="font-medium text-sm sm:text-base">Date</p>
-                  <p className="text-gray-600 text-xs sm:text-sm">{workshopData.details.find(d => d.id === 'date')?.value || 'To be announced'}</p>
+                  <p className="text-gray-600 text-xs sm:text-sm">{siteContent.workshop.details.find(d => d.id === 'date')?.value || 'To be announced'}</p>
                 </div>
               </div>
               <div className="flex items-start">
                 <span className="text-blue-500 mr-2 mt-0.5">🏛️</span>
                 <div>
                   <p className="font-medium text-sm sm:text-base">Venue</p>
-                  <p className="text-gray-600 text-xs sm:text-sm">{workshopData.details.find(d => d.id === 'venue')?.value || 'To be announced'}</p>
+                  <p className="text-gray-600 text-xs sm:text-sm">{siteContent.workshop.details.find(d => d.id === 'venue')?.value || 'To be announced'}</p>
                 </div>
               </div>
               <p className="text-xs sm:text-sm text-gray-600 mt-2 sm:mt-4">
-                {workshopData.shortDescription}
+                {siteContent.workshop.shortDescription}
               </p>
             </div>
           </CardContent>
@@ -97,7 +96,7 @@ export default function RegisterOptions() {
                 <span className="text-purple-500 mr-2 mt-0.5">📅</span>
                 <div>
                   <p className="font-medium text-sm sm:text-base">Date</p>
-                  <p className="text-gray-600 text-xs sm:text-sm">{FEST_DATES.DAY_1} - {FEST_DATES.DAY_2}</p>
+                  <p className="text-gray-600 text-xs sm:text-sm">{festInfo.dates.day1} - {festInfo.dates.day2}</p>
                 </div>
               </div>
               <div className="flex items-start">

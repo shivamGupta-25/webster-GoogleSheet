@@ -4,7 +4,48 @@ import { NextResponse } from 'next/server';
 const tokenCache = new Map();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
+// Admin credentials (in production, these should be in environment variables)
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+
 export function middleware(request) {
+    // Check if the request is for an admin route
+    if (request.nextUrl.pathname.startsWith('/admin')) {
+        // Skip authentication for the login page itself
+        if (request.nextUrl.pathname === '/admin/login') {
+            return NextResponse.next();
+        }
+
+        // Get the session token from cookies
+        const sessionToken = request.cookies.get('admin_session')?.value;
+
+        // If no session token is present, redirect to login
+        if (!sessionToken) {
+            return NextResponse.redirect(new URL('/admin/login', request.url));
+        }
+
+        // Validate the session token
+        try {
+            const decodedToken = Buffer.from(sessionToken, 'base64').toString();
+            const [username, timestamp] = decodedToken.split('|');
+            
+            // Check if the token is expired (2 hours)
+            if (Date.now() - parseInt(timestamp) > 2 * 60 * 60 * 1000) {
+                return NextResponse.redirect(new URL('/admin/login', request.url));
+            }
+
+            // Check if the username matches
+            if (username !== ADMIN_USERNAME) {
+                return NextResponse.redirect(new URL('/admin/login', request.url));
+            }
+
+            return NextResponse.next();
+        } catch (error) {
+            console.error('Session validation error:', error);
+            return NextResponse.redirect(new URL('/admin/login', request.url));
+        }
+    }
+
     // Check if the request is for a protected form submission page
     if (request.nextUrl.pathname === '/formsubmitted/workshop' || request.nextUrl.pathname === '/formsubmitted/techelons') {
         // Get the registration token from the URL
@@ -72,5 +113,5 @@ export function middleware(request) {
 }
 
 export const config = {
-    matcher: ['/formsubmitted/workshop', '/formsubmitted/techelons']
+    matcher: ['/admin/:path*', '/formsubmitted/workshop', '/formsubmitted/techelons']
 };

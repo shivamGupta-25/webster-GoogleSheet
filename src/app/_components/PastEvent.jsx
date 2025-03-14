@@ -7,6 +7,13 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PastEventSkeleton } from "./Skeletons/PastEvent";
+import siteContent from '@/app/_data/siteContent';
+
+// Dynamically import the EventSwiper component
+const EventSwiper = dynamic(() => import('./Skeletons/PastEvent/EventSwiper').then(mod => ({ default: mod.EventSwiper })), {
+  ssr: false,
+  loading: () => <div className="w-full max-w-md mx-auto aspect-[16/9] rounded-xl bg-gray-200 animate-pulse" />
+});
 
 // Custom hook for handling resize with debounce
 const useWindowSize = () => {
@@ -39,111 +46,98 @@ const useWindowSize = () => {
   return isMobile;
 };
 
-// Memoized slides data to prevent recreation
-const SLIDES = [
-  { title: "UI/UX Workshop", imageUrl: "/assets/Events/UI-UX_Workshop.png" },
-  { title: "AI Artistry-23", imageUrl: "/assets/Events/AI_Artistry_23.jpg" },
-  { title: "AI Artistry-24", imageUrl: "/assets/Events/AI_Artistry_24.jpg" },
-  { title: "Dark Coding-23", imageUrl: "/assets/Events/DarkCoding_23.jpg" },
-  { title: "Dark Coding-24", imageUrl: "/assets/Events/DarkCoding_24.jpg" },
-  { title: "E-Lafda-24", imageUrl: "/assets/Events/E-Lafda_24.jpg" },
-  { title: "Git & GitHub Workshop", imageUrl: "/assets/Events/Git_GitHub.jpg" },
-  { title: "Googler-23", imageUrl: "/assets/Events/Googler_23.jpg" },
-  { title: "Googler-24", imageUrl: "/assets/Events/Googler_24.jpg" },
-  { title: "Techelons-23", imageUrl: "/assets/Events/Techelons_23.jpg" },
-  { title: "Techelons-24", imageUrl: "/assets/Events/Techelons_24.jpg" },
-  { title: "TechnoQuiz-24", imageUrl: "/assets/Events/TechnoQuiz_24.jpg" },
-  { title: "Web Hive-23", imageUrl: "/assets/Events/Web_Hive_23.jpg" },
-  { title: "Whatzapper-23", imageUrl: "/assets/Events/Whatzapper_23.jpg" }
-];
-
-// Dynamically import Swiper components with loading skeleton
-const EventSwiper = dynamic(() => 
-  import('./Skeletons/PastEvent/EventSwiper').then(mod => mod.EventSwiper), {
-  loading: () => <PastEventSkeleton />,
-  ssr: false
-});
-
-// Optimized heading component
-const SectionHeading = React.memo(() => (
-  <motion.h1
-    className="flex justify-center items-center text-6xl sm:text-8xl lg:text-9xl font-extrabold text-gray-900 dark:text-white mb-8"
-    initial={{ opacity: 0, y: 50 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ amount: 0.5, once: true }}
-    transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
-  >
-    Past Event
-  </motion.h1>
-));
-
-SectionHeading.displayName = 'SectionHeading';
-
 // Optimized image component with loading state
-const EventImage = React.memo(({ src, alt, priority }) => {
+const EventImage = React.memo(({ src, alt, priority = false }) => {
   const [isLoading, setIsLoading] = useState(true);
   
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full aspect-[16/9]">
       {isLoading && (
-        <Skeleton className="absolute inset-0 w-full h-full rounded-xl" />
+        <div className="absolute inset-0 bg-gray-200 animate-pulse rounded-xl" />
       )}
       <Image
         src={src}
         alt={alt}
         fill
+        sizes="(max-width: 640px) 280px, (max-width: 768px) 384px, 512px"
         className={cn(
-          "object-cover transition-opacity duration-300",
+          "object-cover transition-opacity duration-300 rounded-xl",
           isLoading ? "opacity-0" : "opacity-100"
         )}
-        sizes="(max-width: 480px) 280px, (max-width: 640px) 320px, (max-width: 768px) 384px, (max-width: 1024px) 448px, 576px"
+        onLoad={() => setIsLoading(false)}
         priority={priority}
-        loading={priority ? "eager" : "lazy"}
-        placeholder="blur"
-        blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzAwIiBoZWlnaHQ9IjQ3NSIgdmlld0JveD0iMCAwIDcwMCA0NzUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzMzMzMzMyIgLz4KPC9zdmc+"
-        onLoadingComplete={() => setIsLoading(false)}
       />
-      <div className="absolute inset-0 flex items-end">
-        <div className="w-full items-center bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 xs:p-4 sm:p-5">
-          <h2 className="text-base xs:text-lg sm:text-xl md:text-2xl font-bold text-white line-clamp-2">{alt}</h2>
-        </div>
-      </div>
     </div>
   );
 });
 
 EventImage.displayName = 'EventImage';
 
+// Main PastEvent component
 const PastEvent = () => {
-  const [isMounted, setIsMounted] = useState(false);
   const isMobile = useWindowSize();
+  
+  // Get past events content from centralized data
+  const { title, description, events } = useMemo(() => siteContent.pastEvents, []);
+  
+  // Use events from centralized data
+  const slides = useMemo(() => events || [], [events]);
 
-  // Client-side only mounting
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  // Animation variants for the section
+  const sectionVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        duration: 0.6,
+        when: "beforeChildren",
+        staggerChildren: 0.2
+      }
+    }
+  };
 
-  // Only render content client-side to prevent hydration issues
-  if (!isMounted) return null;
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+  };
 
   return (
-    <section
-      id="pastevent"
-      className="mb-8 sm:py-16 md:py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto overflow-hidden"
-      style={{ contentVisibility: 'auto', containIntrinsicSize: '0 500px' }}
+    <motion.section 
+      id="past-events"
+      className="relative py-16 md:py-24 overflow-hidden"
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "-100px" }}
+      variants={sectionVariants}
     >
-      <SectionHeading />
-
-      <Suspense fallback={<PastEventSkeleton />}>
-        <EventSwiper 
-          slides={SLIDES} 
-          isMobile={isMobile} 
-          EventImage={EventImage} 
-        />
-      </Suspense>
-    </section>
+      <div className="container px-4 md:px-6 mx-auto">
+        <motion.div 
+          className="flex flex-col items-center justify-center space-y-4 text-center mb-12"
+          variants={itemVariants}
+        >
+          <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">{title}</h2>
+          <p className="max-w-[700px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
+            {description}
+          </p>
+        </motion.div>
+        
+        <motion.div variants={itemVariants}>
+          {slides && slides.length > 0 ? (
+            <EventSwiper 
+              slides={slides} 
+              isMobile={isMobile} 
+              EventImage={EventImage} 
+            />
+          ) : (
+            <div className="text-center py-10">
+              <p className="text-gray-500">No past events to display</p>
+            </div>
+          )}
+        </motion.div>
+      </div>
+    </motion.section>
   );
 };
 
-// Use React.memo to prevent unnecessary re-renders
-export default React.memo(PastEvent);
+export default PastEvent;

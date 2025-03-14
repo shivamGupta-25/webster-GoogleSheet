@@ -7,6 +7,10 @@ import dynamic from 'next/dynamic';
 import Header from "./_components/Header";
 import Footer from "./_components/Footer";
 
+// Import Swiper styles globally
+import 'swiper/css';
+import 'swiper/css/effect-cards';
+
 // Dynamically import components with loading priority
 // Critical components loaded first with higher priority
 const Banner = dynamic(() => import("./_components/Banner"), { 
@@ -17,7 +21,10 @@ const Banner = dynamic(() => import("./_components/Banner"), {
 // Less critical components loaded with lower priority
 const About = dynamic(() => import("./_components/About"), { ssr: true });
 const Workshop = dynamic(() => import("./_components/Workshop"), { ssr: true });
-const PastEvent = dynamic(() => import("./_components/PastEvent"), { ssr: true });
+const PastEvent = dynamic(() => import("./_components/PastEvent"), { 
+  ssr: true,
+  loading: () => <div className="h-[400px] animate-pulse bg-gray-100 rounded-lg" aria-label="Loading past events" />
+});
 const Council = dynamic(() => import("./_components/Council"), { ssr: true });
 const ScrollToTopButton = dynamic(() => import("./_components/ScrollToTopButton"), { ssr: false });
 

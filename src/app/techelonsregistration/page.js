@@ -13,12 +13,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Toaster, toast } from "react-hot-toast";
 import { z } from "zod";
 import { 
-  TECHELONS_EVENTS, 
-  REGISTRATION_ENABLED, 
-  REGISTRATION_STATUS, 
-  getEffectiveRegistrationStatus 
-} from "@/app/_data/techelonsEventsData";
+  events, 
+  festInfo, 
+  registrationStatus
+} from "@/app/_data/techelonsData";
 import { validateFile, MAX_FILE_SIZE, ACCEPTED_FILE_TYPES } from "@/app/_utils/fileUtils";
+
+// Helper function to get effective registration status
+const getEffectiveRegistrationStatus = (event) => {
+  if (!festInfo.registrationEnabled) return registrationStatus.CLOSED;
+  return event.registrationStatus || registrationStatus.CLOSED;
+};
 
 // Constants
 // const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -94,7 +99,8 @@ function RegistrationPageContent() {
   
   // Check if registration is enabled globally
   useEffect(() => {
-    if (!REGISTRATION_ENABLED) {
+    console.log("Registration enabled status:", festInfo.registrationEnabled);
+    if (festInfo.registrationEnabled === false) {
       toast.error('Registration is currently closed', { 
         duration: 3000,
         icon: '🚫'
@@ -120,7 +126,7 @@ function RegistrationPageContent() {
   // Get preselected event ID from URL if available
   const preselectedEventId = searchParams.get('preselect');
   const preselectedEvent = preselectedEventId ? 
-    TECHELONS_EVENTS.find(e => e.id === preselectedEventId) : null;
+    events.find(e => e.id === preselectedEventId) : null;
 
   // Memoize the form schema to prevent unnecessary recalculations
   const getFormSchema = useCallback(() => {
@@ -154,11 +160,11 @@ function RegistrationPageContent() {
     }
     
     // Check if the event exists
-    const event = TECHELONS_EVENTS.find(e => e.id === preselectedEventId);
+    const event = events.find(e => e.id === preselectedEventId);
     if (event) {
       // Check if the preselected event's registration is open
       const effectiveStatus = getEffectiveRegistrationStatus(event);
-      if (effectiveStatus !== REGISTRATION_STATUS.OPEN) {
+      if (effectiveStatus !== registrationStatus.OPEN) {
         setInvalidPreselectedEvent({
           name: event.name,
           status: effectiveStatus
@@ -247,11 +253,11 @@ function RegistrationPageContent() {
       return;
     }
 
-    const event = TECHELONS_EVENTS.find(e => e.id === watchedEvent);
+    const event = events.find(e => e.id === watchedEvent);
     if (event) {
       // Check if the selected event's registration is open
       const effectiveStatus = getEffectiveRegistrationStatus(event);
-      if (effectiveStatus !== REGISTRATION_STATUS.OPEN) {
+      if (effectiveStatus !== registrationStatus.OPEN) {
         toast.error(`Registration for ${event.name} is ${effectiveStatus}`, { 
           duration: 3000,
           icon: '🚫'
@@ -442,7 +448,7 @@ function RegistrationPageContent() {
       }
       
       // Check if global registration is still enabled
-      if (!REGISTRATION_ENABLED) {
+      if (!festInfo.registrationEnabled) {
         toast.error('Registration is currently closed', { 
           duration: 3000,
           icon: '🚫'
@@ -454,7 +460,7 @@ function RegistrationPageContent() {
       // Check if the selected event's registration is still open
       if (selectedEvent) {
         const effectiveStatus = getEffectiveRegistrationStatus(selectedEvent);
-        if (effectiveStatus !== REGISTRATION_STATUS.OPEN) {
+        if (effectiveStatus !== registrationStatus.OPEN) {
           toast.error(`Registration for ${selectedEvent.name} is now ${effectiveStatus}`, { 
             duration: 3000,
             icon: '🚫'
@@ -572,7 +578,7 @@ function RegistrationPageContent() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedEvent, validateFiles, prepareFormData, reset, router, REGISTRATION_ENABLED, invalidPreselectedEvent]);
+  }, [selectedEvent, validateFiles, prepareFormData, reset, router, festInfo.registrationEnabled, invalidPreselectedEvent]);
 
   // Field validation feedback notifications - memoized
   const showFieldErrorToasts = useCallback(() => {
@@ -619,8 +625,8 @@ function RegistrationPageContent() {
   }, []);
 
   // Filter events to only show those with open registration
-  const availableEvents = TECHELONS_EVENTS.filter(event => 
-    getEffectiveRegistrationStatus(event) === REGISTRATION_STATUS.OPEN
+  const availableEvents = events.filter(event => 
+    getEffectiveRegistrationStatus(event) === registrationStatus.OPEN
   );
 
   return (
@@ -659,7 +665,7 @@ function RegistrationPageContent() {
           <CardHeader className="space-y-2 px-4 sm:px-6">
             <CardTitle className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center">Techelons-25</CardTitle>
             <CardTitle className="text-xl sm:text-2xl lg:text-3xl font-bold text-center">Registration</CardTitle>
-            {REGISTRATION_ENABLED ? (
+            {festInfo.registrationEnabled ? (
               <p className="text-center text-green-600 font-medium">Registration is currently open</p>
             ) : (
               <p className="text-center text-red-600 font-medium">Registration is currently closed</p>
@@ -700,10 +706,10 @@ function RegistrationPageContent() {
                     }
                     
                     // Find and set the selected event
-                    const event = TECHELONS_EVENTS.find(e => e.id === value);
+                    const event = events.find(e => e.id === value);
                     if (event) {
                       const effectiveStatus = getEffectiveRegistrationStatus(event);
-                      if (effectiveStatus === REGISTRATION_STATUS.OPEN) {
+                      if (effectiveStatus === registrationStatus.OPEN) {
                         setSelectedEvent(event);
                         setRequiredTeamSize(event.teamSize);
                         setTeamSize(Math.max(1, event.teamSize.min - 1));
@@ -1094,7 +1100,7 @@ function RegistrationPageContent() {
               <Button
                 type="submit"
                 className="w-full py-2 text-sm sm:text-base mt-4"
-                disabled={isSubmitting || !REGISTRATION_ENABLED || (selectedEvent && getEffectiveRegistrationStatus(selectedEvent) !== REGISTRATION_STATUS.OPEN) || invalidPreselectedEvent}
+                disabled={isSubmitting || !festInfo.registrationEnabled || (selectedEvent && getEffectiveRegistrationStatus(selectedEvent) !== registrationStatus.OPEN) || invalidPreselectedEvent}
                 onClick={(e) => {
                   if (invalidPreselectedEvent) {
                     e.preventDefault();
@@ -1115,7 +1121,7 @@ function RegistrationPageContent() {
                   }
                   
                   // Check if registration is still open
-                  if (!REGISTRATION_ENABLED) {
+                  if (!festInfo.registrationEnabled) {
                     e.preventDefault();
                     toast.error('Registration is currently closed', { 
                       duration: 3000,
@@ -1125,7 +1131,7 @@ function RegistrationPageContent() {
                   }
                   
                   // Check if the selected event's registration is still open
-                  if (selectedEvent && getEffectiveRegistrationStatus(selectedEvent) !== REGISTRATION_STATUS.OPEN) {
+                  if (selectedEvent && getEffectiveRegistrationStatus(selectedEvent) !== registrationStatus.OPEN) {
                     e.preventDefault();
                     toast.error(`Registration for ${selectedEvent.name} is ${getEffectiveRegistrationStatus(selectedEvent)}`, { 
                       duration: 3000,

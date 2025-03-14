@@ -12,11 +12,11 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import {
-    FEST_DAYS,
-    FEST_DATES,
-    getEventsByFestDay,
+    festDays as FEST_DAYS,
+    festInfo,
+    getEventsByDay as getEventsByFestDay,
     formatEventDateTime
-} from "@/app/_data/techelonsEventsData"
+} from "@/app/_data/techelonsData"
 import EventModal from "./TechelonsEventDialog"
 import { 
     EventCardSkeleton, 
@@ -536,24 +536,23 @@ const EventSchedule = () => {
     const [contentLoaded, setContentLoaded] = useState(false)
     const eventsRef = useRef(null)
 
-    // Get schedule data
-    const scheduleData = useMemo(
-        () => [
+    // Memoize schedule data to prevent recalculation
+    const scheduleData = useMemo(() => {
+        return [
             {
                 day: "Day 1",
-                date: FEST_DATES.DAY_1,
+                date: festInfo.dates.day1,
                 value: FEST_DAYS.DAY_1,
                 events: getEventsByFestDay(FEST_DAYS.DAY_1),
             },
             {
                 day: "Day 2",
-                date: FEST_DATES.DAY_2,
+                date: festInfo.dates.day2,
                 value: FEST_DAYS.DAY_2,
                 events: getEventsByFestDay(FEST_DAYS.DAY_2),
-            },
-        ],
-        []
-    )
+            }
+        ];
+    }, []);
 
     // Custom hooks
     const {
