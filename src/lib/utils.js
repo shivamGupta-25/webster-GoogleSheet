@@ -18,15 +18,38 @@ export async function fetchSiteContent() {
   }
   
   try {
-    const response = await fetch('/api/content');
+    // Determine if we're in a browser or server environment
+    const isServer = typeof window === 'undefined';
+    let url;
     
-    if (!response.ok) {
-      throw new Error('Failed to fetch site content');
+    if (isServer) {
+      // In server environment, use absolute URL with the host from environment variable
+      // or connect directly to the database
+      const { default: connectToDatabase } = await import('@/lib/mongodb');
+      const { default: SiteContent } = await import('@/models/SiteContent');
+      
+      await connectToDatabase();
+      const content = await SiteContent.findOne({});
+      
+      if (!content) {
+        console.warn('No site content found in database');
+        return null;
+      }
+      
+      siteContentCache = content;
+      return content;
+    } else {
+      // In browser environment, use relative URL
+      const response = await fetch('/api/content');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch site content');
+      }
+      
+      const data = await response.json();
+      siteContentCache = data;
+      return data;
     }
-    
-    const data = await response.json();
-    siteContentCache = data;
-    return data;
   } catch (error) {
     console.error('Error fetching site content:', error);
     return null;
@@ -44,28 +67,50 @@ export async function fetchTechelonsData() {
   }
   
   try {
-    // Create a promise that rejects after a timeout
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Request timed out')), 5000);
-    });
+    // Determine if we're in a browser or server environment
+    const isServer = typeof window === 'undefined';
     
-    // Create the fetch promise
-    const fetchPromise = fetch('/api/techelons');
-    
-    // Race the fetch against the timeout
-    const response = await Promise.race([fetchPromise, timeoutPromise]);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch Techelons data: ${response.status} ${response.statusText}`);
+    if (isServer) {
+      // In server environment, connect directly to the database
+      const { default: connectToDatabase } = await import('@/lib/mongodb');
+      const { default: TechelonsData } = await import('@/models/TechelonsData');
+      
+      await connectToDatabase();
+      const data = await TechelonsData.findOne({});
+      
+      if (!data) {
+        console.warn('No Techelons data found in database');
+        return null;
+      }
+      
+      techelonsDataCache = data;
+      techelonsDataCacheTimestamp = now;
+      return data;
+    } else {
+      // In browser environment, use relative URL with timeout
+      // Create a promise that rejects after a timeout
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timed out')), 5000);
+      });
+      
+      // Create the fetch promise
+      const fetchPromise = fetch('/api/techelons');
+      
+      // Race the fetch against the timeout
+      const response = await Promise.race([fetchPromise, timeoutPromise]);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch Techelons data: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      // Update cache
+      techelonsDataCache = data;
+      techelonsDataCacheTimestamp = now;
+      
+      return data;
     }
-    
-    const data = await response.json();
-    
-    // Update cache
-    techelonsDataCache = data;
-    techelonsDataCacheTimestamp = now;
-    
-    return data;
   } catch (error) {
     console.error('Error fetching Techelons data:', error);
     
