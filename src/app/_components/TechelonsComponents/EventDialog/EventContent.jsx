@@ -1,4 +1,6 @@
-import { memo, useMemo } from "react";
+// NOTE: This file was automatically updated to use fetchTechelonsData instead of importing from techelonsData directly.
+// Please review and update the component to use the async fetchTechelonsData function.
+import { memo, useMemo, useState, useEffect } from "react";
 import { 
   BookOpen, 
   Calendar, 
@@ -16,69 +18,77 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { ICON_SIZE } from "./constants";
 import { SectionHeading, InfoCard, RegistrationStatus } from "./UIComponents";
-import { festDays } from "@/app/_data/techelonsData";
+import { fetchTechelonsData } from '@/lib/utils';
 
 // Event details section
-export const EventDetails = memo(({ event, formattedDate, formattedTime, dayOfWeek }) => (
-  <InfoCard
-    icon={<Info className={ICON_SIZE} />}
-    title="Event Details"
-    className="overflow-hidden"
-  >
-    <div className="text-sm text-muted-foreground grid grid-cols-1 md:grid-cols-2 gap-4">
-      {/* Date and Time */}
-      <div className="flex items-start">
-        <Calendar className="h-4 w-4 mr-2 text-primary flex-shrink-0 mt-0.5" />
-        <div>
-          <div className="font-medium text-primary">
-            {event.festDay === festDays.DAY_1 ? "Day 1" : "Day 2"}
-          </div>
-          <div>{formattedDate} ({dayOfWeek})</div>
-          <div>{formattedTime}</div>
-          {event.duration && (
-            <div className="flex items-center mt-1">
-              <Clock className="h-3 w-3 mr-1" />
-              <span>Duration: {event.duration}</span>
+export const EventDetails = memo(({ event, formattedDate, formattedTime, dayOfWeek }) => {
+  // Determine day display based on festDay value directly
+  const getDayDisplay = () => {
+    if (!event.festDay) return "";
+    return event.festDay === "day1" ? "Day 1" : "Day 2";
+  };
+  
+  return (
+    <InfoCard
+      icon={<Info className={ICON_SIZE} />}
+      title="Event Details"
+      className="overflow-hidden"
+    >
+      <div className="text-sm text-muted-foreground grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Date and Time */}
+        <div className="flex items-start">
+          <Calendar className="h-4 w-4 mr-2 text-primary flex-shrink-0 mt-0.5" />
+          <div>
+            <div className="font-medium text-primary">
+              {getDayDisplay()}
             </div>
-          )}
+            <div>{formattedDate} ({dayOfWeek})</div>
+            <div>{formattedTime}</div>
+            {event.duration && (
+              <div className="flex items-center mt-1">
+                <Clock className="h-3 w-3 mr-1" />
+                <span>Duration: {event.duration}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Location */}
+        {event.venue && (
+          <div className="flex items-start">
+            <MapPin className="h-4 w-4 mr-2 text-primary flex-shrink-0 mt-0.5" />
+            <div>
+              <div className="font-medium">Location</div>
+              <div className="break-words">{event.venue}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Speaker */}
+        {event.speaker && (
+          <div className="flex items-start">
+            <User className="h-4 w-4 mr-2 text-primary flex-shrink-0 mt-0.5" />
+            <div>
+              <div className="font-medium">Speaker</div>
+              <div className="break-words">{event.speaker}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Registration status */}
+        <div className="flex items-start">
+          <Ticket className="h-4 w-4 mr-2 text-primary flex-shrink-0 mt-0.5" />
+          <div>
+            <div className="font-medium">Registration</div>
+            <div className="flex items-center">
+              <RegistrationStatus status={event.registrationStatus} event={event} />
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Location */}
-      {event.venue && (
-        <div className="flex items-start">
-          <MapPin className="h-4 w-4 mr-2 text-primary flex-shrink-0 mt-0.5" />
-          <div>
-            <div className="font-medium">Location</div>
-            <div className="break-words">{event.venue}</div>
-          </div>
-        </div>
-      )}
-
-      {/* Speaker */}
-      {event.speaker && (
-        <div className="flex items-start">
-          <User className="h-4 w-4 mr-2 text-primary flex-shrink-0 mt-0.5" />
-          <div>
-            <div className="font-medium">Speaker</div>
-            <div className="break-words">{event.speaker}</div>
-          </div>
-        </div>
-      )}
-
-      {/* Registration status */}
-      <div className="flex items-start">
-        <Ticket className="h-4 w-4 mr-2 text-primary flex-shrink-0 mt-0.5" />
-        <div>
-          <div className="font-medium">Registration</div>
-          <div className="flex items-center">
-            <RegistrationStatus status={event.registrationStatus} event={event} />
-          </div>
-        </div>
-      </div>
-    </div>
-  </InfoCard>
-));
+    </InfoCard>
+  );
+});
 EventDetails.displayName = "EventDetails";
 
 // Description section

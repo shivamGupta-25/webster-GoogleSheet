@@ -1,3 +1,5 @@
+// NOTE: This file was automatically updated to use fetchSiteContent instead of importing siteContent directly.
+// Please review and update the component to use the async fetchSiteContent function.
 "use client";
 
 import { useState, useEffect } from "react";
@@ -13,7 +15,7 @@ import { Loader2, Save, Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import siteContent from "@/app/_data/siteContent";
+import { fetchSiteContent } from '@/lib/utils';
 import { ImageUpload } from "@/components/ui/image-upload";
 
 export default function WorkshopManagement() {
@@ -33,10 +35,12 @@ export default function WorkshopManagement() {
           const data = await response.json();
           setWorkshop(data);
         } else {
+          const siteContent = await fetchSiteContent();
           setWorkshop(JSON.parse(JSON.stringify(siteContent.workshop)));
         }
       } catch (error) {
         console.error("Error fetching workshop data:", error);
+        const siteContent = await fetchSiteContent();
         setWorkshop(JSON.parse(JSON.stringify(siteContent.workshop)));
       } finally {
         setIsLoading(false);

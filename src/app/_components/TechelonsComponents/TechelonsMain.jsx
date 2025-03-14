@@ -1,7 +1,9 @@
+// NOTE: This file was automatically updated to use fetchTechelonsData instead of importing from techelonsData directly.
+// Please review and update the component to use the async fetchTechelonsData function.
 import { useState, useEffect, lazy, Suspense, useCallback, useMemo, memo } from "react";
 import { useRouter } from "next/navigation";
 import PropTypes from 'prop-types';
-import { festInfo } from "@/app/_data/techelonsData";
+import { fetchTechelonsData } from '@/lib/utils'; // NOTE: You need to update this component to use the async fetchTechelonsData function
 import { Skeleton } from "@/components/ui/skeleton";
 import {
     FeatureCardSkeleton,
@@ -66,14 +68,35 @@ function throttle(func, delay) {
 
 // Custom hook for registration status
 const useRegistrationStatus = () => {
-    return useMemo(() => {
-        const regStatus = festInfo.registrationEnabled;
-        
-        return {
-            registrationOpen: regStatus,
-            statusMessage: regStatus ? "Registration Open" : "Registration Closed"
+    const [registrationStatus, setRegistrationStatus] = useState({
+        registrationOpen: false,
+        statusMessage: "Loading..."
+    });
+
+    useEffect(() => {
+        const getRegistrationStatus = async () => {
+            try {
+                const data = await fetchTechelonsData();
+                if (data && data.festInfo) {
+                    const regStatus = data.festInfo.registrationEnabled;
+                    setRegistrationStatus({
+                        registrationOpen: regStatus,
+                        statusMessage: regStatus ? "Registration Open" : "Registration Closed"
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching registration status:", error);
+                setRegistrationStatus({
+                    registrationOpen: false,
+                    statusMessage: "Registration Status Unavailable"
+                });
+            }
         };
+        
+        getRegistrationStatus();
     }, []);
+
+    return registrationStatus;
 };
 
 // Feature Card component
@@ -142,18 +165,20 @@ const TechelonsMain = () => {
     useEffect(() => {
         const fetchTechelonsContent = async () => {
             try {
-                const response = await fetch('/api/techelons');
-                if (response.ok) {
-                    const data = await response.json();
-                    
+                setIsLoading(true);
+                const data = await fetchTechelonsData();
+                
+                if (data) {
                     // Check if there's UI content in the response
                     if (data.uiContent) {
                         setTechelonsContent(data.uiContent);
                     }
                 }
+                setIsLoading(false);
             } catch (error) {
                 console.error("Error fetching Techelons content:", error);
                 // Keep using default content on error
+                setIsLoading(false);
             }
         };
         

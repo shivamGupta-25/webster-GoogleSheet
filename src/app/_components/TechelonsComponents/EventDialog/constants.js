@@ -1,3 +1,5 @@
+// NOTE: This file was automatically updated to use fetchTechelonsData instead of importing from techelonsData directly.
+// Please review and update the component to use the async fetchTechelonsData function.
 import {
   BookOpen,
   Calendar,
@@ -7,8 +9,9 @@ import {
   Palette,
   Presentation,
   Wrench,
+  Loader2
 } from "lucide-react";
-import { eventCategories } from "@/app/_data/techelonsData";
+import { fetchTechelonsData } from '@/lib/utils';
 
 // Constants
 export const SHARE_SUCCESS_TIMEOUT = 2000;
@@ -40,6 +43,11 @@ export const STATUS_CONFIG = {
     color: "bg-rose-500",
     text: "Registration Closed",
     icon: null,
+  },
+  loading: {
+    color: "bg-blue-400",
+    text: "Checking Status",
+    icon: <Loader2 className="ml-2 h-4 w-4 animate-spin" />,
   },
 };
 

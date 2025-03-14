@@ -1,12 +1,14 @@
+// NOTE: This file was automatically updated to use fetchTechelonsData instead of importing from techelonsData directly.
+// Please review and update the component to use the async fetchTechelonsData function.
 "use client"
 
-import { useEffect, useCallback, useMemo, memo, lazy, Suspense } from "react"
+import { useEffect, useCallback, useMemo, memo, lazy, Suspense, useState } from "react"
 import PropTypes from 'prop-types'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { formatEventDateTime, getImagePath, registrationStatus } from "@/app/_data/techelonsData"
+import { fetchTechelonsData } from '@/lib/utils';
 import { getCategoryStyle } from "./constants"
 import { useShareEvent, useImageHandling } from "./hooks"
-import { getEffectiveRegistrationStatus } from "./utils"
+import { getEffectiveRegistrationStatus, formatEventDateTime, getImagePath } from "./utils"
 
 // Lazy loaded components with appropriate chunk names
 const EventImage = lazy(() => import('./EventImage' /* webpackChunkName: "event-image" */));
@@ -38,6 +40,10 @@ LoadingFallback.displayName = "LoadingFallback";
 
 // Main component
 const EventModal = memo(({ event, isOpen, onClose }) => {
+  // State for registration status
+  const [registrationStatus, setRegistrationStatus] = useState('closed');
+  const [isLoading, setIsLoading] = useState(false);
+
   // Custom hooks
   const { handleShare, shareSuccess } = useShareEvent(event || {});
   const {
@@ -67,23 +73,48 @@ const EventModal = memo(({ event, isOpen, onClose }) => {
     }
   }, [event?.id, isOpen, resetImage]);
 
+  // Fetch registration status when event changes
+  useEffect(() => {
+    const fetchRegistrationStatus = async () => {
+      if (!event) return;
+      
+      setIsLoading(true);
+      try {
+        const status = await getEffectiveRegistrationStatus(event);
+        setRegistrationStatus(status);
+      } catch (error) {
+        console.error('Error fetching registration status:', error);
+        setRegistrationStatus('closed');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (isOpen && event) {
+      fetchRegistrationStatus();
+    }
+  }, [event, isOpen]);
+
   // Handle registration button click
-  const handleRegister = useCallback(() => {
+  const handleRegister = useCallback(async () => {
     if (!event) return;
 
-    // Check if registration is open using the utility function
-    const effectiveStatus = getEffectiveRegistrationStatus(event);
-    if (effectiveStatus !== registrationStatus.OPEN) {
-      // If registration is closed, don't open the registration page
-      return;
-    }
+    try {
+      // Use the already fetched registration status
+      if (registrationStatus !== 'open') {
+        // If registration is closed, don't open the registration page
+        return;
+      }
 
-    if (event.registrationLink) {
-      window.open(event.registrationLink, "_blank", "noopener,noreferrer");
-    } else {
-      window.open(`/techelonsregistration?preselect=${event.id || event.category || "event"}`, "_blank");
+      if (event.registrationLink) {
+        window.open(event.registrationLink, "_blank", "noopener,noreferrer");
+      } else {
+        window.open(`/techelonsregistration?preselect=${event.id || event.category || "event"}`, "_blank");
+      }
+    } catch (error) {
+      console.error('Error handling registration:', error);
     }
-  }, [event]);
+  }, [event, registrationStatus]);
 
   // If no event, don't render anything
   if (!event) return null;
@@ -145,7 +176,9 @@ const EventModal = memo(({ event, isOpen, onClose }) => {
                     event={event} 
                     handleRegister={handleRegister} 
                     handleShare={handleShare} 
-                    shareSuccess={shareSuccess} 
+                    shareSuccess={shareSuccess}
+                    registrationStatus={registrationStatus}
+                    isLoading={isLoading}
                   />
                 </Suspense>
               </div>

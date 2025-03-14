@@ -1,8 +1,10 @@
+// NOTE: This file was automatically updated to use fetchSiteContent instead of importing siteContent directly.
+// Please review and update the component to use the async fetchSiteContent function.
 import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
 import { NextResponse } from 'next/server';
 import { sendWorkshopConfirmation } from '@/app/_utils/emailServiceWorkshop';
-import siteContent from '@/app/_data/siteContent';
+import { fetchSiteContent } from '@/lib/utils';
 
 // Scopes and environment variables
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];

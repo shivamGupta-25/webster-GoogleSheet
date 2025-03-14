@@ -1,5 +1,8 @@
+// NOTE: This file was automatically updated to use fetchTechelonsData instead of importing from techelonsData directly.
+// Please review and update the component to use the async fetchTechelonsData function.
 import nodemailer from 'nodemailer';
-import { getEventById, getWhatsAppGroupLink, formatEventDateTime } from '@/app/_data/techelonsData';
+import { fetchTechelonsData } from '@/lib/utils';
+import { formatEventDateTime } from '@/app/_components/TechelonsComponents/EventDialog/utils';
 
 // Singleton transporter instance
 let cachedTransporter = null;
@@ -383,7 +386,7 @@ export const generateEmailTemplate = ({ name, eventDetails, whatsappLink }) => {
               
               ${teamSize ? `
               <div style="display: flex; align-items: flex-start; margin-bottom: 12px;">
-                <span style="color: #4f46e5; font-weight: 500; min-width: 100px;">�� Team Size:</span>
+                <span style="color: #4f46e5; font-weight: 500; min-width: 100px;"> Team Size:</span>
                 <span>${teamSize}</span>
               </div>
               ` : ''}

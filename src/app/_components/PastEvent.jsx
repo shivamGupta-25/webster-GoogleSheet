@@ -1,13 +1,14 @@
+// NOTE: This file was automatically updated to use fetchSiteContent instead of importing siteContent directly.
+// Please review and update the component to use the async fetchSiteContent function.
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import dynamic from 'next/dynamic';
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { cn, fetchSiteContent } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PastEventSkeleton } from "./Skeletons/PastEvent";
-import siteContent from '@/app/_data/siteContent';
 
 // Dynamically import the EventSwiper component
 const EventSwiper = dynamic(() => import('./Skeletons/PastEvent/EventSwiper').then(mod => ({ default: mod.EventSwiper })), {
@@ -76,11 +77,35 @@ EventImage.displayName = 'EventImage';
 // Main PastEvent component
 const PastEvent = () => {
   const isMobile = useWindowSize();
+  const [pastEventsData, setPastEventsData] = useState({
+    title: "",
+    description: "",
+    events: []
+  });
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Get past events content from centralized data
-  const { title, description, events } = useMemo(() => siteContent.pastEvents, []);
+  // Fetch past events data
+  useEffect(() => {
+    const loadContent = async () => {
+      try {
+        const content = await fetchSiteContent();
+        if (content && content.pastEvents) {
+          setPastEventsData(content.pastEvents);
+        }
+      } catch (error) {
+        console.error('Error loading past events data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadContent();
+  }, []);
   
-  // Use events from centralized data
+  // Destructure past events data
+  const { title, description, events } = pastEventsData;
+  
+  // Use events from fetched data
   const slides = useMemo(() => events || [], [events]);
 
   // Animation variants for the section
@@ -101,6 +126,10 @@ const PastEvent = () => {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
   };
+
+  if (isLoading) {
+    return <PastEventSkeleton />;
+  }
 
   return (
     <motion.section 

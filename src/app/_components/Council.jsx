@@ -1,3 +1,5 @@
+// NOTE: This file was automatically updated to use fetchSiteContent instead of importing siteContent directly.
+// Please review and update the component to use the async fetchSiteContent function.
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,9 +13,7 @@ import "swiper/css/autoplay";
 import { memo, useCallback, useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
-import siteContent from '@/app/_data/siteContent';
-
-// Council members data - now imported from centralized content
+import { fetchSiteContent } from '@/lib/utils';
 
 // Optimized blur data URL for image placeholders (smaller SVG)
 const BLUR_DATA_URL = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmMWYxZjEiLz48L3N2Zz4=";
@@ -172,39 +172,73 @@ CouncilSkeleton.displayName = 'CouncilSkeleton';
 const Council = () => {
     // Use a ref to track if component is mounted to prevent hydration issues
     const [isMounted, setIsMounted] = useState(false);
+    const [councilData, setCouncilData] = useState({
+        title: "",
+        description: "",
+        members: []
+    });
+    const [isLoading, setIsLoading] = useState(true);
     
     useEffect(() => {
         setIsMounted(true);
+        
+        const loadContent = async () => {
+            try {
+                const content = await fetchSiteContent();
+                if (content && content.council) {
+                    setCouncilData(content.council);
+                }
+            } catch (error) {
+                console.error('Error loading council data:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        
+        loadContent();
     }, []);
     
-    // Get council content from centralized data
-    const { title, description, members } = useMemo(() => siteContent.council, []);
-    
-    // Replace the hardcoded council members with the data from siteContent
-    const councilMembers = useMemo(() => members, [members]);
+    // Destructure council data
+    const { title, description, members } = councilData;
     
     // Memoize the slider content to prevent unnecessary re-renders
     const renderSlides = useMemo(() => 
-        councilMembers.map((member, index) => (
+        members && members.map((member, index) => (
             <SwiperSlide key={member.name} className="h-auto">
                 <MemberCard member={member} index={index} />
             </SwiperSlide>
         )),
-    []);
+    [members]);
+
+    if (isLoading) {
+        return <CouncilSkeleton />;
+    }
 
     return (
         <section className="py-12 md:py-24">
             <div className="container px-4 md:px-6">
                 <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
-                    <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">{title}</h2>
-                    <p className="max-w-[700px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
+                    <motion.h2 
+                        className="text-3xl font-bold tracking-tighter sm:text-5xl"
+                        variants={animations.title}
+                        initial="hidden"
+                        whileInView="visible"
+                        viewport={{ once: true }}
+                    >
+                        {title}
+                    </motion.h2>
+                    <motion.p 
+                        className="max-w-[700px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400"
+                        variants={animations.title}
+                        initial="hidden"
+                        whileInView="visible"
+                        viewport={{ once: true }}
+                    >
                         {description}
-                    </p>
+                    </motion.p>
                 </div>
                 
-                {!isMounted ? (
-                    <CouncilSkeleton />
-                ) : (
+                {isMounted && (
                     <Swiper {...SWIPER_CONFIG} className="w-full">
                         {renderSlides}
                     </Swiper>
@@ -214,4 +248,4 @@ const Council = () => {
     );
 };
 
-export default memo(Council);
+export default Council;

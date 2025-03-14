@@ -1,3 +1,5 @@
+// NOTE: This file was automatically updated to use fetchTechelonsData instead of importing from techelonsData directly.
+// Please review and update the component to use the async fetchTechelonsData function.
 "use client"
 
 import { useMemo, useState, memo, useEffect, useCallback, useRef } from "react"
@@ -11,13 +13,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
-import {
-    festDays as FEST_DAYS,
-    festInfo,
-    getEventsByDay as getEventsByFestDay,
-    formatEventDateTime
-} from "@/app/_data/techelonsData"
+import { fetchTechelonsData } from "@/lib/utils"
 import EventModal from "./TechelonsEventDialog"
+import { formatEventDateTime } from "./EventDialog/utils"
 import { 
     EventCardSkeleton, 
     EventGridSkeleton,
@@ -79,9 +77,17 @@ const getCategoryStyle = (category) => {
  * Custom hook for event filtering functionality
  */
 const useEventFiltering = (scheduleData) => {
-    const [activeDay, setActiveDay] = useState(FEST_DAYS.DAY_1)
+    // Initialize with null, we'll set it to the first day's value once data is loaded
+    const [activeDay, setActiveDay] = useState(null)
     const [activeFilter, setActiveFilter] = useState("all")
     const [searchTerm, setSearchTerm] = useState("")
+
+    // Set activeDay to the first day's value once scheduleData is loaded
+    useEffect(() => {
+        if (scheduleData && scheduleData.length > 0 && !activeDay) {
+            setActiveDay(scheduleData[0].value);
+        }
+    }, [scheduleData, activeDay]);
 
     // Get all categories for filtering
     const allCategories = useMemo(() => {
@@ -96,6 +102,9 @@ const useEventFiltering = (scheduleData) => {
 
     // Filter and sort events
     const filteredEvents = useMemo(() => {
+        // If activeDay is not set yet, return empty array
+        if (!activeDay) return [];
+        
         const currentDayEvents = scheduleData.find((day) => day.value === activeDay)?.events || []
 
         return currentDayEvents
@@ -211,12 +220,17 @@ const useEventCardImage = (imagePath) => {
 const EventCard = memo(({ event, openEventModal, index }) => {
     const imagePath = useMemo(() => getImagePath(event.image), [event.image])
     const categoryStyle = useMemo(() => getCategoryStyle(event.category), [event.category])
-    const { formattedDate, dayOfWeek, formattedTime } = useMemo(() => formatEventDateTime(event), [event])
+    
+    // Use formatEventDateTime directly
+    const eventDateTime = useMemo(() => formatEventDateTime(event), [event]);
+    const { formattedDate, dayOfWeek, formattedTime } = eventDateTime;
+    
     const imageContainerRef = useRef(null)
     
     // Get event day (Day 1 or Day 2) from the event object
     const eventDay = useMemo(() => {
-        return event.festDay === FEST_DAYS.DAY_1 ? "Day 1" : "Day 2"
+        // Determine the day based on the event's festDay property
+        return event.festDay === "day1" || event.festDay === "DAY_1" ? "Day 1" : "Day 2"
     }, [event.festDay])
 
     const {
@@ -535,24 +549,68 @@ const EventSchedule = () => {
     const [isLoading, setIsLoading] = useState(true)
     const [contentLoaded, setContentLoaded] = useState(false)
     const eventsRef = useRef(null)
+    const [techelonsData, setTechelonsData] = useState(null)
+
+    // Fetch Techelons data
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const data = await fetchTechelonsData();
+                setTechelonsData(data);
+            } catch (error) {
+                console.error("Error fetching Techelons data:", error);
+            }
+        };
+        
+        fetchData();
+    }, []);
+
+    // Set loading state with timeouts for better UX
+    useEffect(() => {
+        // Set a timeout to hide loading state even if data doesn't load
+        const loadingTimer = setTimeout(() => {
+            setIsLoading(false)
+        }, LOADING_TIMEOUT)
+        
+        // Simulate content loading with a shorter timeout
+        const contentTimer = setTimeout(() => {
+            setContentLoaded(true)
+        }, CONTENT_LOADING_TIMEOUT)
+        
+        return () => {
+            clearTimeout(loadingTimer)
+            clearTimeout(contentTimer)
+        }
+    }, [])
 
     // Memoize schedule data to prevent recalculation
     const scheduleData = useMemo(() => {
+        if (!techelonsData) return [];
+        
+        const FEST_DAYS = techelonsData.festDays || {};
+        const festInfo = techelonsData.festInfo || {};
+        
+        // Filter events by festDay
+        const getEventsByFestDay = (festDay) => {
+            if (!techelonsData.events || !Array.isArray(techelonsData.events)) return [];
+            return techelonsData.events.filter(event => event.festDay === festDay);
+        };
+        
         return [
             {
                 day: "Day 1",
-                date: festInfo.dates.day1,
-                value: FEST_DAYS.DAY_1,
-                events: getEventsByFestDay(FEST_DAYS.DAY_1),
+                date: festInfo?.dates?.day1,
+                value: FEST_DAYS?.DAY_1,
+                events: getEventsByFestDay(FEST_DAYS?.DAY_1),
             },
             {
                 day: "Day 2",
-                date: festInfo.dates.day2,
-                value: FEST_DAYS.DAY_2,
-                events: getEventsByFestDay(FEST_DAYS.DAY_2),
+                date: festInfo?.dates?.day2,
+                value: FEST_DAYS?.DAY_2,
+                events: getEventsByFestDay(FEST_DAYS?.DAY_2),
             }
         ];
-    }, []);
+    }, [techelonsData]);
 
     // Custom hooks
     const {
@@ -573,23 +631,6 @@ const EventSchedule = () => {
         openEventModal,
         closeEventModal
     } = useEventModal()
-
-    // Simulate loading with a timeout
-    useEffect(() => {
-        const loadingTimer = setTimeout(() => {
-            setIsLoading(false)
-        }, LOADING_TIMEOUT)
-        
-        // Simulate content loading with a shorter timeout
-        const contentTimer = setTimeout(() => {
-            setContentLoaded(true)
-        }, CONTENT_LOADING_TIMEOUT)
-        
-        return () => {
-            clearTimeout(loadingTimer)
-            clearTimeout(contentTimer)
-        }
-    }, [])
 
     // Memoize the heading section for better performance
     const headingSection = useMemo(() => (
@@ -657,7 +698,11 @@ const EventSchedule = () => {
                 className="w-full max-w-7xl mx-auto px-4 py-6 sm:py-8"
             >
                 {headingSection}
-                <Tabs defaultValue={activeDay} onValueChange={setActiveDay} className="w-full">
+                <Tabs 
+                    value={activeDay || (scheduleData.length > 0 ? scheduleData[0].value : undefined)} 
+                    onValueChange={setActiveDay} 
+                    className="w-full"
+                >
                     <div className="flex flex-col gap-6 mb-6">
                         {tabsSection}
                         {filterSection}

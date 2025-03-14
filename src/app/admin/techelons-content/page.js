@@ -41,46 +41,17 @@ export default function TechelonsContentManagement() {
         setIsLoading(true);
         const response = await fetch('/api/techelons');
         
-        if (response.ok) {
-          const data = await response.json();
-          
-          // Check if there's UI content in the response
-          if (data.uiContent) {
-            setContent(data.uiContent);
-          } else {
-            // Set default content if uiContent is not available
-            setContent({
-              title: "Techelons'25",
-              subtitle: "Shivaji College's premier technical festival, where innovation meets creativity.",
-              festDate: "April 2025",
-              aboutTitle: "About Techelons",
-              aboutParagraphs: [
-                "Techelons is the annual tech fest by Websters, the CS Society of Shivaji College, DU. It's where students showcase technical skills through competitions, hackathons, and coding challenges.",
-                "Beyond competitions, Techelons features expert-led seminars on emerging tech and industry trends. The fest promotes networking and collaboration among students and professionals in a celebration of technological innovation."
-              ],
-              exploreTitle: "Explore the Future of Technology",
-              exploreDescription: "Join us for two days of innovation, competition, and creativity at Shivaji College. Showcase your skills and connect with tech enthusiasts from across the nation.",
-              features: [
-                {
-                  title: "Competitions",
-                  icon: "🏆",
-                  description: "Participate in coding, analysis, and gaming competitions with exciting prizes."
-                },
-                {
-                  title: "Seminar",
-                  icon: "🎤",
-                  description: "Gain insights from industry leaders through engaging and informative seminars."
-                },
-                {
-                  title: "Networking",
-                  icon: "🌐",
-                  description: "Connect with tech enthusiasts and industry professionals."
-                }
-              ]
-            });
-          }
+        if (!response.ok) {
+          throw new Error('Failed to fetch Techelons data');
+        }
+        
+        const data = await response.json();
+        
+        // Check if there's UI content in the response
+        if (data.uiContent) {
+          setContent(data.uiContent);
         } else {
-          // Set default content if API fails
+          // Initialize with default UI content structure
           setContent({
             title: "Techelons'25",
             subtitle: "Shivaji College's premier technical festival, where innovation meets creativity.",
@@ -111,9 +82,13 @@ export default function TechelonsContentManagement() {
             ]
           });
         }
+        
+        setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching Techelons content:", error);
-        // Set default content on error
+        console.error('Error fetching Techelons content:', error);
+        toast.error('Failed to load Techelons content');
+        
+        // Initialize with default UI content structure
         setContent({
           title: "Techelons'25",
           subtitle: "Shivaji College's premier technical festival, where innovation meets creativity.",
@@ -143,11 +118,11 @@ export default function TechelonsContentManagement() {
             }
           ]
         });
-      } finally {
+        
         setIsLoading(false);
       }
     };
-
+    
     fetchContent();
   }, []);
 
@@ -341,43 +316,38 @@ export default function TechelonsContentManagement() {
     try {
       setIsSaving(true);
       
-      // Show loading toast
-      const loadingToastId = toast.loading('Saving Techelons content...');
+      // Get the current Techelons data first
+      const response = await fetch('/api/techelons');
       
-      // Get the existing techelons data
-      const techelonsResponse = await fetch('/api/techelons');
-      let techelonsData = {};
-      
-      if (techelonsResponse.ok) {
-        techelonsData = await techelonsResponse.json();
+      if (!response.ok) {
+        throw new Error('Failed to fetch current Techelons data');
       }
       
-      // Update the UI content in the techelons data
-      techelonsData.uiContent = content;
+      const currentData = await response.json();
       
-      // Send data to API
-      const response = await fetch('/api/techelons', {
+      // Update only the UI content part
+      const updatedData = {
+        ...currentData,
+        uiContent: content
+      };
+      
+      // Save the updated data
+      const saveResponse = await fetch('/api/techelons', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(techelonsData),
+        body: JSON.stringify(updatedData),
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save Techelons content');
+      if (!saveResponse.ok) {
+        throw new Error('Failed to save Techelons content');
       }
       
-      // Dismiss loading toast and show success toast
-      toast.dismiss(loadingToastId);
-      toast.success('Techelons content saved successfully! The changes will be visible after a page refresh.');
-      
-      // Refresh the page to show updated content
-      router.refresh();
+      toast.success('Techelons content saved successfully');
     } catch (error) {
-      console.error("Error saving Techelons content:", error);
-      toast.error(error.message || "There was an error saving your data. Please try again.");
+      console.error('Error saving Techelons content:', error);
+      toast.error('Failed to save Techelons content');
     } finally {
       setIsSaving(false);
     }

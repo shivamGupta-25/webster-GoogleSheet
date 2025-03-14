@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useEffect, memo, useMemo } from 'react';
+import React, { useEffect, memo, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { motion, useAnimation } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useInView } from 'react-intersection-observer';
-import siteContent from '@/app/_data/siteContent';
+import { fetchSiteContent } from '@/lib/utils';
 
 // Memoize animation configurations to prevent recreating on each render
 const animations = {
@@ -36,8 +36,34 @@ const Banner = () => {
     threshold: 0.2
   });
 
-  // Get banner content from centralized data
-  const { title, subtitle, institution, description, buttonText, buttonLink, logoImage } = useMemo(() => siteContent.banner, []);
+  const [bannerContent, setBannerContent] = useState({
+    title: "",
+    subtitle: "",
+    institution: "",
+    description: "",
+    buttonText: "",
+    buttonLink: "",
+    logoImage: ""
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch banner content
+  useEffect(() => {
+    const loadContent = async () => {
+      try {
+        const content = await fetchSiteContent();
+        if (content && content.banner) {
+          setBannerContent(content.banner);
+        }
+      } catch (error) {
+        console.error('Error loading banner content:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadContent();
+  }, []);
 
   // Start animation when component comes into view
   useEffect(() => {
@@ -48,8 +74,12 @@ const Banner = () => {
 
   // Memoize the router navigation function to prevent recreating on each render
   const handleButtonClick = useMemo(() => () => {
-    router.push(buttonLink);
-  }, [router, buttonLink]);
+    router.push(bannerContent.buttonLink);
+  }, [router, bannerContent.buttonLink]);
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-[300px]">Loading...</div>;
+  }
 
   return (
     <section ref={ref} className="container px-8 mx-auto my-4 mb-12">
@@ -63,26 +93,26 @@ const Banner = () => {
           className="flex flex-col items-center justify-center text-center w-full md:pl-10"
           variants={animations.content}
         >
-          <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold">{title}</h1>
+          <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold">{bannerContent.title}</h1>
           <h2 className="text-sm md:text-xl font-normal">
-            {subtitle}
+            {bannerContent.subtitle}
           </h2>
-          <h3 className="text-xl md:text-2xl">{institution}</h3>
+          <h3 className="text-xl md:text-2xl">{bannerContent.institution}</h3>
           <p className="py-6 text-base md:text-lg max-w-2xl">
-            {description}
+            {bannerContent.description}
           </p>
           <Button
             onClick={handleButtonClick}
             className="p-6 rounded-[30px] shadow-lg hover:scale-105 transition-all text-lg font-bold tracking-wide mt-4"
           >
-            {buttonText}
+            {bannerContent.buttonText}
           </Button>
         </motion.div>
 
         <div className="flex items-center justify-center">
           <Image
             alt="Websters Logo"
-            src={logoImage}
+            src={bannerContent.logoImage}
             width={350}
             height={350}
             priority

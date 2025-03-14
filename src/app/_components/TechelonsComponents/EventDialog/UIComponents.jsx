@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ICON_MAP, STATUS_CONFIG } from "./constants";
@@ -50,8 +50,26 @@ InfoCard.displayName = "InfoCard";
 
 // Registration status component
 export const RegistrationStatus = memo(({ status, event }) => {
-  // Use the utility function to get the effective status
-  const effectiveStatus = event ? getEffectiveRegistrationStatus(event) : (status || "closed");
+  const [effectiveStatus, setEffectiveStatus] = useState(status || "loading");
+  
+  useEffect(() => {
+    const fetchStatus = async () => {
+      if (event) {
+        try {
+          const result = await getEffectiveRegistrationStatus(event);
+          setEffectiveStatus(result);
+        } catch (error) {
+          console.error('Error fetching registration status:', error);
+          setEffectiveStatus('closed');
+        }
+      } else {
+        setEffectiveStatus(status || 'closed');
+      }
+    };
+    
+    fetchStatus();
+  }, [event, status]);
+  
   const config = STATUS_CONFIG[effectiveStatus] || STATUS_CONFIG.closed;
 
   return (

@@ -1,11 +1,13 @@
+// NOTE: This file was automatically updated to use fetchSiteContent instead of importing siteContent directly.
+// Please review and update the component to use the async fetchSiteContent function.
 'use client';
 
-import { memo, useMemo, useCallback } from 'react';
+import { memo, useMemo, useCallback, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useRouter } from "next/navigation";
-import siteContent from '@/app/_data/siteContent';
+import { fetchSiteContent } from '@/lib/utils';
 
 // Memoized animation configurations
 const animations = {
@@ -36,11 +38,35 @@ DetailItem.displayName = 'DetailItem';
 
 const Workshop = () => {
   const router = useRouter();
+  const [workshopData, setWorkshopData] = useState({
+    title: "",
+    shortDescription: "",
+    details: [],
+    bannerImage: "",
+    isRegistrationOpen: false
+  });
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Memoize workshop details to prevent unnecessary re-renders
-  const { title, shortDescription, details, bannerImage, isRegistrationOpen } = useMemo(() => {
-    return siteContent.workshop;
+  // Fetch workshop data
+  useEffect(() => {
+    const loadContent = async () => {
+      try {
+        const content = await fetchSiteContent();
+        if (content && content.workshop) {
+          setWorkshopData(content.workshop);
+        }
+      } catch (error) {
+        console.error('Error loading workshop data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadContent();
   }, []);
+
+  // Destructure workshop data
+  const { title, shortDescription, details, bannerImage, isRegistrationOpen } = workshopData;
 
   // Memoize event handler to prevent unnecessary re-renders
   const handleRegistration = useCallback(() => {
@@ -50,6 +76,10 @@ const Workshop = () => {
       router.push("/registrationclosed");
     }
   }, [isRegistrationOpen, router]);
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-[300px]">Loading...</div>;
+  }
 
   return (
     <section
@@ -94,7 +124,7 @@ const Workshop = () => {
           </div>
 
           <div className="space-y-3 border-l-4 border-blue-500 pl-4">
-            {details.map((detail, index) => (
+            {details && details.map((detail, index) => (
               <DetailItem
                 key={index}
                 label={detail.label}

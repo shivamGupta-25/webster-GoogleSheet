@@ -15,7 +15,6 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ImageUpload } from "@/components/ui/image-upload";
-import siteContent from "@/app/_data/siteContent";
 
 export default function ContentManagement() {
   const router = useRouter();
@@ -48,20 +47,64 @@ export default function ContentManagement() {
     const fetchContent = async () => {
       try {
         const response = await fetch('/api/content');
-        if (response.ok) {
-          const data = await response.json();
-          setContent(data);
-        } else {
-          setContent(JSON.parse(JSON.stringify(siteContent)));
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch content');
         }
+        
+        const data = await response.json();
+        setContent(data);
+        setIsLoading(false);
       } catch (error) {
         console.error('Error fetching content:', error);
-        setContent(JSON.parse(JSON.stringify(siteContent)));
-      } finally {
+        toast.error('Failed to load content');
         setIsLoading(false);
+        
+        // If we can't fetch from API, initialize with empty structure
+        setContent({
+          banner: {
+            title: "",
+            subtitle: "",
+            institution: "",
+            description: "",
+            buttonText: "",
+            buttonLink: "",
+            logoImage: PLACEHOLDER_IMAGES.banner
+          },
+          about: {
+            title: "",
+            paragraphs: []
+          },
+          council: {
+            title: "",
+            description: "",
+            members: []
+          },
+          pastEvents: {
+            title: "",
+            description: "",
+            events: []
+          },
+          workshop: {
+            title: "",
+            shortDescription: "",
+            isRegistrationOpen: true,
+            formSubmittedLink: "",
+            details: [],
+            bannerImage: PLACEHOLDER_IMAGES.event,
+            whatsappGroupLink: "",
+            socialMedia: {
+              instagram: "",
+              linkedin: ""
+            },
+            emailNotification: {
+              subject: ""
+            }
+          }
+        });
       }
     };
-
+    
     fetchContent();
   }, []);
 
@@ -346,13 +389,6 @@ export default function ContentManagement() {
     try {
       setIsSaving(true);
       
-      // Show loading toast
-      const loadingToastId = toast.loading('Saving content...');
-      
-      // Log the content being sent
-      console.log('Saving content:', content);
-      
-      // Send content to API
       const response = await fetch('/api/content', {
         method: 'POST',
         headers: {
@@ -362,19 +398,13 @@ export default function ContentManagement() {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save content');
+        throw new Error('Failed to save content');
       }
       
-      // Dismiss loading toast and show success toast
-      toast.dismiss(loadingToastId);
-      toast.success('Content saved successfully! The changes will be visible after a page refresh.');
-      
-      // Refresh the page to show updated content
-      router.refresh();
+      toast.success('Content saved successfully');
     } catch (error) {
-      console.error("Error saving content:", error);
-      toast.error(error.message || "There was an error saving your content. Please try again.");
+      console.error('Error saving content:', error);
+      toast.error('Failed to save content');
     } finally {
       setIsSaving(false);
     }

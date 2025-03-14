@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast, Toaster } from "react-hot-toast";
 import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import siteContent from "@/app/_data/siteContent";
+import { fetchSiteContent } from '@/lib/utils';
 
 // Email validation schema
 const emailSchema = z.string()
@@ -81,16 +81,34 @@ export default function RegistrationPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [serverError, setServerError] = useState(null);
     const [isOnline, setIsOnline] = useState(true);
+    const [workshopData, setWorkshopData] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
     
-    // Memoize workshop details to prevent unnecessary re-renders
-    const workshopDetails = useMemo(() => siteContent.workshop, []);
+    // Fetch workshop data
+    useEffect(() => {
+        const loadContent = async () => {
+            try {
+                const content = await fetchSiteContent();
+                if (content && content.workshop) {
+                    setWorkshopData(content.workshop);
+                }
+            } catch (error) {
+                console.error('Error loading workshop data:', error);
+                setServerError('Failed to load workshop data. Please try again later.');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        
+        loadContent();
+    }, []);
 
     // Redirect if registration is closed
     useEffect(() => {
-        if (!workshopDetails.isRegistrationOpen) {
+        if (!isLoading && workshopData && !workshopData.isRegistrationOpen) {
             router.push('/registrationclosed');
         }
-    }, [router, workshopDetails.isRegistrationOpen]);
+    }, [router, workshopData, isLoading]);
 
     // Handle online status with useEffect to avoid hydration mismatch
     useEffect(() => {
@@ -195,7 +213,7 @@ export default function RegistrationPage() {
                         
                         // Redirect to the form submission page
                         setTimeout(() => {
-                            const redirectUrl = `${workshopDetails.formSubmittedLink}?token=${encodeURIComponent(result.registrationToken)}&alreadyRegistered=true`;
+                            const redirectUrl = `${workshopData.formSubmittedLink}?token=${encodeURIComponent(result.registrationToken)}&alreadyRegistered=true`;
                             window.location.href = redirectUrl;
                         }, 500);
                         return;
@@ -207,7 +225,7 @@ export default function RegistrationPage() {
                     
                     // Ensure redirection happens with a slight delay and proper URL
                     setTimeout(() => {
-                        const redirectUrl = `${workshopDetails.formSubmittedLink}?token=${encodeURIComponent(result.registrationToken)}`;
+                        const redirectUrl = `${workshopData.formSubmittedLink}?token=${encodeURIComponent(result.registrationToken)}`;
                         window.location.href = redirectUrl;
                     }, 500);
                     
@@ -243,7 +261,7 @@ export default function RegistrationPage() {
         } finally {
             setIsSubmitting(false);
         }
-    }, [isSubmitting, isOnline, reset]);
+    }, [isSubmitting, isOnline, reset, workshopData]);
 
     return (
         <main className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -269,7 +287,7 @@ export default function RegistrationPage() {
 
                     <form onSubmit={handleSubmit(handleRegistration)} className="space-y-6">
                         <div className="flex item-center justify-center px-3 py-2 border border-gray-300 rounded-md shadow-sm font-bold text-gray-700 text-lg">
-                            {workshopDetails.title}
+                            {workshopData?.title}
                         </div>
 
                         {formFields.map(field => (

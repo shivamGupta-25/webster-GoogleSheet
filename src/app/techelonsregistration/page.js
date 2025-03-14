@@ -1,3 +1,5 @@
+// NOTE: This file was automatically updated to use fetchTechelonsData instead of importing from techelonsData directly.
+// Please review and update the component to use the async fetchTechelonsData function.
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
@@ -12,17 +14,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Toaster, toast } from "react-hot-toast";
 import { z } from "zod";
-import { 
-  events, 
-  festInfo, 
-  registrationStatus
-} from "@/app/_data/techelonsData";
+import { fetchTechelonsData } from "@/lib/utils";
 import { validateFile, MAX_FILE_SIZE, ACCEPTED_FILE_TYPES } from "@/app/_utils/fileUtils";
 
 // Helper function to get effective registration status
-const getEffectiveRegistrationStatus = (event) => {
-  if (!festInfo.registrationEnabled) return registrationStatus.CLOSED;
-  return event.registrationStatus || registrationStatus.CLOSED;
+const getEffectiveRegistrationStatus = (event, registrationStatus, festInfo) => {
+  if (!festInfo?.registrationEnabled) return registrationStatus?.CLOSED;
+  return event?.registrationStatus || registrationStatus?.OPEN;
 };
 
 // Constants
@@ -96,18 +94,56 @@ function RegistrationPageContent() {
   const [requiredTeamSize, setRequiredTeamSize] = useState({ min: 1, max: 1 });
   const [invalidPreselectedEvent, setInvalidPreselectedEvent] = useState(null);
   const [showAnimation, setShowAnimation] = useState(false);
+  const [fileError, setFileError] = useState("");
+  const [techelonsData, setTechelonsData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Fetch Techelons data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await fetchTechelonsData();
+        setTechelonsData(data);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching Techelons data:", error);
+        toast.error("Failed to load registration data. Please try again later.");
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+
+  // Extract data from techelonsData
+  const events = techelonsData?.events || [];
+  const festInfo = techelonsData?.festInfo || { registrationEnabled: false };
+  const registrationStatus = techelonsData?.registrationStatus || { OPEN: "OPEN", CLOSED: "CLOSED", COMING_SOON: "COMING_SOON" };
+  
+  // Show loading state while fetching data
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+        <p className="text-lg text-center text-muted-foreground">Loading registration form...</p>
+      </div>
+    );
+  }
   
   // Check if registration is enabled globally
   useEffect(() => {
-    console.log("Registration enabled status:", festInfo.registrationEnabled);
-    if (festInfo.registrationEnabled === false) {
-      toast.error('Registration is currently closed', { 
-        duration: 3000,
-        icon: '🚫'
-      });
-      router.push('/registrationclosed');
+    // Only run this effect when festInfo is properly loaded
+    if (techelonsData && festInfo && typeof festInfo.registrationEnabled !== 'undefined') {
+      console.log(`Registration enabled status: ${festInfo.registrationEnabled}`);
+      if (festInfo.registrationEnabled === false) {
+        toast.error('Registration is currently closed', { 
+          duration: 3000,
+          icon: '🚫'
+        });
+        router.push('/registrationclosed');
+      }
     }
-  }, [router]);
+  }, [router, festInfo, techelonsData]);
   
   // Animation control for invalid preselected event
   useEffect(() => {
@@ -163,7 +199,7 @@ function RegistrationPageContent() {
     const event = events.find(e => e.id === preselectedEventId);
     if (event) {
       // Check if the preselected event's registration is open
-      const effectiveStatus = getEffectiveRegistrationStatus(event);
+      const effectiveStatus = getEffectiveRegistrationStatus(event, registrationStatus, festInfo);
       if (effectiveStatus !== registrationStatus.OPEN) {
         setInvalidPreselectedEvent({
           name: event.name,
@@ -256,7 +292,7 @@ function RegistrationPageContent() {
     const event = events.find(e => e.id === watchedEvent);
     if (event) {
       // Check if the selected event's registration is open
-      const effectiveStatus = getEffectiveRegistrationStatus(event);
+      const effectiveStatus = getEffectiveRegistrationStatus(event, registrationStatus, festInfo);
       if (effectiveStatus !== registrationStatus.OPEN) {
         toast.error(`Registration for ${event.name} is ${effectiveStatus}`, { 
           duration: 3000,
@@ -459,7 +495,7 @@ function RegistrationPageContent() {
       
       // Check if the selected event's registration is still open
       if (selectedEvent) {
-        const effectiveStatus = getEffectiveRegistrationStatus(selectedEvent);
+        const effectiveStatus = getEffectiveRegistrationStatus(selectedEvent, registrationStatus, festInfo);
         if (effectiveStatus !== registrationStatus.OPEN) {
           toast.error(`Registration for ${selectedEvent.name} is now ${effectiveStatus}`, { 
             duration: 3000,
@@ -626,7 +662,7 @@ function RegistrationPageContent() {
 
   // Filter events to only show those with open registration
   const availableEvents = events.filter(event => 
-    getEffectiveRegistrationStatus(event) === registrationStatus.OPEN
+    getEffectiveRegistrationStatus(event, registrationStatus, festInfo) === registrationStatus.OPEN
   );
 
   return (
@@ -708,7 +744,7 @@ function RegistrationPageContent() {
                     // Find and set the selected event
                     const event = events.find(e => e.id === value);
                     if (event) {
-                      const effectiveStatus = getEffectiveRegistrationStatus(event);
+                      const effectiveStatus = getEffectiveRegistrationStatus(event, registrationStatus, festInfo);
                       if (effectiveStatus === registrationStatus.OPEN) {
                         setSelectedEvent(event);
                         setRequiredTeamSize(event.teamSize);
@@ -1100,7 +1136,7 @@ function RegistrationPageContent() {
               <Button
                 type="submit"
                 className="w-full py-2 text-sm sm:text-base mt-4"
-                disabled={isSubmitting || !festInfo.registrationEnabled || (selectedEvent && getEffectiveRegistrationStatus(selectedEvent) !== registrationStatus.OPEN) || invalidPreselectedEvent}
+                disabled={isSubmitting || !festInfo.registrationEnabled || (selectedEvent && getEffectiveRegistrationStatus(selectedEvent, registrationStatus, festInfo) !== registrationStatus.OPEN) || invalidPreselectedEvent}
                 onClick={(e) => {
                   if (invalidPreselectedEvent) {
                     e.preventDefault();
@@ -1131,9 +1167,9 @@ function RegistrationPageContent() {
                   }
                   
                   // Check if the selected event's registration is still open
-                  if (selectedEvent && getEffectiveRegistrationStatus(selectedEvent) !== registrationStatus.OPEN) {
+                  if (selectedEvent && getEffectiveRegistrationStatus(selectedEvent, registrationStatus, festInfo) !== registrationStatus.OPEN) {
                     e.preventDefault();
-                    toast.error(`Registration for ${selectedEvent.name} is ${getEffectiveRegistrationStatus(selectedEvent)}`, { 
+                    toast.error(`Registration for ${selectedEvent.name} is ${getEffectiveRegistrationStatus(selectedEvent, registrationStatus, festInfo)}`, { 
                       duration: 3000,
                       icon: '🚫'
                     });

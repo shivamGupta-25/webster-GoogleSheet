@@ -6,8 +6,7 @@ import { Dialog } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import { useRouter, usePathname } from "next/navigation";
-import { festInfo } from "@/app/_data/techelonsData";
-import siteContent from '@/app/_data/siteContent';
+import { fetchTechelonsData, fetchSiteContent } from "@/lib/utils";
 
 // Animation configurations
 const animations = {
@@ -111,9 +110,48 @@ const HeaderFallback = () => (
 // Main component that uses usePathname
 const HeaderContent = ({ children }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [techelonsRegistrationEnabled, setTechelonsRegistrationEnabled] = useState(false);
+    const [workshopRegistrationOpen, setWorkshopRegistrationOpen] = useState(false);
     const router = useRouter();
     const pathname = usePathname();
     const isHomePage = pathname === '/';
+
+    // Fetch Techelons and Workshop registration status on component mount
+    useEffect(() => {
+        const getRegistrationStatus = async () => {
+            try {
+                // Fetch Techelons data
+                const techelonsData = await fetchTechelonsData();
+                console.log("DEBUG - Techelons Data:", techelonsData);
+                
+                if (techelonsData && techelonsData.festInfo) {
+                    console.log("DEBUG - Techelons festInfo:", techelonsData.festInfo);
+                    console.log("DEBUG - Registration enabled:", techelonsData.festInfo.registrationEnabled);
+                    setTechelonsRegistrationEnabled(techelonsData.festInfo.registrationEnabled);
+                } else {
+                    console.log("DEBUG - No festInfo in techelonsData or techelonsData is null");
+                }
+                
+                // Fetch Site content for workshop data
+                const siteContent = await fetchSiteContent();
+                console.log("DEBUG - Site Content:", siteContent);
+                
+                if (siteContent && siteContent.workshop) {
+                    console.log("DEBUG - Workshop data:", siteContent.workshop);
+                    console.log("DEBUG - Workshop registration open:", siteContent.workshop.isRegistrationOpen);
+                    setWorkshopRegistrationOpen(siteContent.workshop.isRegistrationOpen);
+                } else {
+                    console.log("DEBUG - No workshop in siteContent or siteContent is null");
+                }
+            } catch (error) {
+                console.error("Error fetching registration status:", error);
+                setTechelonsRegistrationEnabled(false);
+                setWorkshopRegistrationOpen(false);
+            }
+        };
+        
+        getRegistrationStatus();
+    }, []);
 
     // Scroll to section with element checking - optimized for performance
     const scrollToSection = useCallback((sectionId) => {
@@ -171,27 +209,38 @@ const HeaderContent = ({ children }) => {
     // Navigation to registration page
     const handleExit = useCallback(() => {
         // Check if techelons registration is open
-        const techelonsRegistrationOpen = festInfo.registrationEnabled === true;
+        const isTechelonsOpen = techelonsRegistrationEnabled === true;
         // Check if workshop registration is open
-        const workshopRegistrationOpen = siteContent.workshop.isRegistrationOpen === true;
+        const isWorkshopOpen = workshopRegistrationOpen === true;
         
-        console.log("Techelons registration status:", festInfo.registrationEnabled);
-        console.log("Workshop registration status:", siteContent.workshop.isRegistrationOpen);
+        // Add more detailed logging
+        console.log("DEBUG - Registration Status:");
+        console.log("techelonsRegistrationEnabled:", techelonsRegistrationEnabled);
+        console.log("techelonsRegistrationEnabled type:", typeof techelonsRegistrationEnabled);
+        console.log("workshopRegistrationOpen:", workshopRegistrationOpen);
+        console.log("workshopRegistrationOpen type:", typeof workshopRegistrationOpen);
+        console.log("isTechelonsOpen (after conversion):", isTechelonsOpen);
+        console.log("isWorkshopOpen (after conversion):", isWorkshopOpen);
+        console.log("Both registrations open?", isTechelonsOpen && isWorkshopOpen);
 
-        if (techelonsRegistrationOpen && workshopRegistrationOpen) {
+        if (isTechelonsOpen && isWorkshopOpen) {
             // Both registrations are open, show a dialog or redirect to a page that lets the user choose
+            console.log("DEBUG - Redirecting to register-options");
             router.push("/register-options");
-        } else if (techelonsRegistrationOpen) {
+        } else if (isTechelonsOpen) {
             // Only techelons registration is open
+            console.log("DEBUG - Redirecting to techelonsregistration");
             router.push("/techelonsregistration");
-        } else if (workshopRegistrationOpen) {
+        } else if (isWorkshopOpen) {
             // Only workshop registration is open
+            console.log("DEBUG - Redirecting to workshopregistration");
             router.push("/workshopregistration");
         } else {
             // No registrations are open
+            console.log("DEBUG - Redirecting to registrationclosed");
             router.push("/registrationclosed");
         }
-    }, [router]);
+    }, [router, techelonsRegistrationEnabled, workshopRegistrationOpen]);
 
     // Handle section scrolling on page load - optimized
     useEffect(() => {

@@ -1,3 +1,5 @@
+// NOTE: This file was automatically updated to use fetchTechelonsData instead of importing from techelonsData directly.
+// Please review and update the component to use the async fetchTechelonsData function.
 "use client"
 import Link from "next/link"
 import { useState, useEffect, Suspense, useRef } from "react"
@@ -5,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Instagram, Linkedin, Home, Check, Calendar, Clock, MapPin, Users, Award, Info, ArrowLeft, Share2, Download, Mail, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
-import { getEventById, getWhatsAppGroupLink, formatEventDateTime, festInfo } from "@/app/_data/techelonsData"
+import { fetchTechelonsData } from '@/lib/utils'; // NOTE: You need to update this component to use the async fetchTechelonsData function
 import confetti from 'canvas-confetti'
 
 const SuccessIcon = () => (

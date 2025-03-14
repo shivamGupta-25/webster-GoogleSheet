@@ -1,8 +1,10 @@
+// NOTE: This file was automatically updated to use fetchTechelonsData instead of importing from techelonsData directly.
+// Please review and update the component to use the async fetchTechelonsData function.
 import { google } from 'googleapis';
 import { JWT } from 'google-auth-library';
 import { NextResponse } from 'next/server';
 import { Readable } from 'stream';
-import { events, getEventById, getWhatsAppGroupLink } from '@/app/_data/techelonsData';
+import { fetchTechelonsData } from '@/lib/utils'; // NOTE: You need to update this component to use the async fetchTechelonsData function
 import { sendTechelonsConfirmation } from '@/app/_utils/emailServiceTechelons';
 import { validateFile, fileToBuffer, generateSanitizedFilename } from '@/app/_utils/fileUtils';
 

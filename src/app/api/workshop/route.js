@@ -1,7 +1,9 @@
+// NOTE: This file was automatically updated to use fetchSiteContent instead of importing siteContent directly.
+// Please review and update the component to use the async fetchSiteContent function.
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
-import siteContent from '@/app/_data/siteContent';
+import connectToDatabase from '@/lib/mongodb';
+import SiteContent from '@/models/SiteContent';
+import { fetchSiteContent } from '@/lib/utils';
 
 // This is a simple API route to update the workshop data
 export async function POST(request) {
@@ -18,26 +20,27 @@ export async function POST(request) {
       );
     }
 
-    // Update the workshop data in siteContent
-    const updatedContent = {
-      ...siteContent,
-      workshop: {
-        ...siteContent.workshop,
-        ...workshopData
-      }
-    };
+    // Connect to the database
+    await connectToDatabase();
+    
+    // Find the site content document
+    let siteContent = await SiteContent.findOne({});
+    
+    if (!siteContent) {
+      return NextResponse.json(
+        { error: 'Site content not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Update the workshop data in the database
+    siteContent = await SiteContent.findByIdAndUpdate(
+      siteContent._id,
+      { workshop: workshopData },
+      { new: true, runValidators: true }
+    );
 
-    // Format the content as a JavaScript module
-    const contentString = `// Centralized site content data for easy management
-const siteContent = ${JSON.stringify(updatedContent, null, 2)};
-
-export default siteContent;`;
-
-    // Write the content to the file
-    const filePath = path.join(process.cwd(), 'src', 'app', '_data', 'siteContent.js');
-    await fs.writeFile(filePath, contentString, 'utf8');
-
-    return NextResponse.json(updatedContent.workshop);
+    return NextResponse.json(siteContent.workshop);
   } catch (error) {
     console.error('Error updating workshop:', error);
     return NextResponse.json({ error: 'Failed to update workshop' }, { status: 500 });
@@ -47,6 +50,19 @@ export default siteContent;`;
 // This endpoint allows fetching the current workshop data
 export async function GET() {
   try {
+    // Connect to the database
+    await connectToDatabase();
+    
+    // Find the site content document
+    const siteContent = await SiteContent.findOne({});
+    
+    if (!siteContent) {
+      return NextResponse.json(
+        { error: 'Site content not found' },
+        { status: 404 }
+      );
+    }
+    
     // Return just the workshop section
     return NextResponse.json(siteContent.workshop || {});
   } catch (error) {

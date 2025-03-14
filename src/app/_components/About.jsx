@@ -1,8 +1,8 @@
 "use client";
-import React, { memo, useMemo } from "react";
+import React, { memo, useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import siteContent from '@/app/_data/siteContent';
+import { fetchSiteContent } from '@/lib/utils';
 
 // Memoize animation configurations
 const animations = {
@@ -37,8 +37,29 @@ const About = () => {
         triggerOnce: true
     });
 
-    // Get about content from centralized data
-    const { title, paragraphs } = useMemo(() => siteContent.about, []);
+    const [aboutContent, setAboutContent] = useState({ title: "", paragraphs: [] });
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const loadContent = async () => {
+            try {
+                const content = await fetchSiteContent();
+                if (content && content.about) {
+                    setAboutContent(content.about);
+                }
+            } catch (error) {
+                console.error('Error loading about content:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadContent();
+    }, []);
+
+    if (isLoading) {
+        return <div className="flex items-center justify-center min-h-[300px]">Loading...</div>;
+    }
 
     return (
         <section
@@ -56,13 +77,13 @@ const About = () => {
                     className="text-6xl sm:text-8xl lg:text-9xl font-extrabold text-gray-900 dark:text-white mb-8"
                     variants={animations.title}
                 >
-                    {title}
+                    {aboutContent.title}
                 </motion.h1>
                 <motion.div
                     className="mt-6 md:mt-8 text-gray-600 text-base md:text-lg lg:text-xl max-w-4xl mx-auto"
                     variants={animations.content}
                 >
-                    {paragraphs.map((paragraph) => (
+                    {aboutContent.paragraphs.map((paragraph) => (
                         <Paragraph
                             key={paragraph.id}
                             html={paragraph.content}

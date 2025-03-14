@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { fetchTechelonsData as fetchTechelonsDataUtil } from "@/lib/utils";
 
 export default function TechelonsManagement() {
   const router = useRouter();
@@ -52,46 +53,64 @@ export default function TechelonsManagement() {
     whatsappGroup: ""
   });
 
-  // Load techelons data on component mount
+  // Load Techelons data on component mount
   useEffect(() => {
     const fetchTechelonsData = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/techelons');
+        const data = await fetchTechelonsDataUtil();
         
-        if (response.ok) {
-          const data = await response.json();
+        if (data) {
           setTechelonsData(data);
         } else {
-          // If API fails, import directly
-          const { 
-            festInfo, 
-            eventCategories, 
-            registrationStatus, 
-            festDays, 
-            events, 
-            whatsappGroups, 
-            EVENT_IMAGES 
-          } = await import('@/app/_data/techelonsData');
-          
-          setTechelonsData({
-            festInfo,
-            eventCategories,
-            registrationStatus,
-            festDays,
-            events,
-            whatsappGroups,
-            EVENT_IMAGES
-          });
+          throw new Error('Failed to fetch Techelons data');
         }
+        
+        setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching Techelons data:", error);
-        toast.error("Failed to load Techelons data");
-      } finally {
+        console.error('Error fetching Techelons data:', error);
+        toast.error('Failed to load Techelons data');
+        
+        // Initialize with default structure if API fails
+        setTechelonsData({
+          festInfo: {
+            registrationEnabled: true,
+            dates: {
+              day1: "April 10, 2025",
+              day2: "April 11, 2025",
+              registrationDeadline: "April 8, 2025"
+            }
+          },
+          eventCategories: {
+            "TECHNICAL": "technical",
+            "WORKSHOP": "workshop",
+            "GAMING": "gaming",
+            "CREATIVE": "creative",
+            "SEMINAR": "seminar"
+          },
+          registrationStatus: {
+            "OPEN": "open",
+            "CLOSED": "closed",
+            "COMING_SOON": "coming-soon"
+          },
+          festDays: {
+            "DAY_1": "day1",
+            "DAY_2": "day2"
+          },
+          eventImages: {
+            "DEFAULT_EVENT_IMAGE": "/placeholder.svg?height=160&width=320",
+            "FALLBACK_IMAGE": "/placeholder.svg?height=200&width=600"
+          },
+          whatsappGroups: {
+            "default": "https://chat.whatsapp.com/techelons-general-group"
+          },
+          events: []
+        });
+        
         setIsLoading(false);
       }
     };
-
+    
     fetchTechelonsData();
   }, []);
 
@@ -231,10 +250,6 @@ export default function TechelonsManagement() {
     try {
       setIsSaving(true);
       
-      // Show loading toast
-      const loadingToastId = toast.loading('Saving Techelons data...');
-      
-      // Send data to API
       const response = await fetch('/api/techelons', {
         method: 'POST',
         headers: {
@@ -244,19 +259,13 @@ export default function TechelonsManagement() {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save Techelons data');
+        throw new Error('Failed to save Techelons data');
       }
       
-      // Dismiss loading toast and show success toast
-      toast.dismiss(loadingToastId);
-      toast.success('Techelons data saved successfully! The changes will be visible after a page refresh.');
-      
-      // Refresh the page to show updated content
-      router.refresh();
+      toast.success('Techelons data saved successfully');
     } catch (error) {
-      console.error("Error saving Techelons data:", error);
-      toast.error(error.message || "There was an error saving your data. Please try again.");
+      console.error('Error saving Techelons data:', error);
+      toast.error('Failed to save Techelons data');
     } finally {
       setIsSaving(false);
     }

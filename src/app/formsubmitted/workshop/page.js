@@ -1,3 +1,5 @@
+// NOTE: This file was automatically updated to use fetchSiteContent instead of importing siteContent directly.
+// Please review and update the component to use the async fetchSiteContent function.
 "use client"
 import Link from "next/link"
 import { useState, useEffect, Suspense } from "react"
@@ -5,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Instagram, Linkedin, Home, Check, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
-import siteContent from '@/app/_data/siteContent'
+import { fetchSiteContent } from '@/lib/utils';
 import confetti from 'canvas-confetti'
 
 const SuccessIcon = () => (
