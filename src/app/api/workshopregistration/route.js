@@ -3,9 +3,6 @@ import { JWT } from 'google-auth-library';
 import { NextResponse } from 'next/server';
 import { sendWorkshopConfirmation } from '@/app/_utils/emailServiceWorkshop';
 import siteContent from '@/app/_data/siteContent';
-import { Resend } from 'resend';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Scopes and environment variables
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
