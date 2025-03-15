@@ -9,6 +9,22 @@ import { CheckCircle, AlertCircle, Home, Calendar, ExternalLink } from "lucide-r
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Safe base64 decode function that works in both client and server environments
+function safeBase64Decode(str) {
+  try {
+    // For client-side
+    if (typeof window !== 'undefined' && window.atob) {
+      return window.atob(str);
+    }
+    
+    // For server-side
+    return Buffer.from(str, 'base64').toString();
+  } catch (error) {
+    console.error("Error decoding base64:", error);
+    return null;
+  }
+}
+
 export default function TechelonsFormSubmittedPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -30,15 +46,9 @@ export default function TechelonsFormSubmittedPage() {
       }
 
       try {
-        // Decode base64 token to get email
-        let email;
-        try {
-          email = atob(token);
-          console.log("Decoded email from token:", email);
-        } catch (decodeError) {
-          console.error("Error decoding token:", decodeError);
-          throw new Error("Invalid token format");
-        }
+        // Decode base64 token to get email using the safe function
+        const email = safeBase64Decode(token);
+        console.log("Decoded email from token:", email);
         
         if (!email || !email.includes('@')) {
           throw new Error("Invalid email in token");
