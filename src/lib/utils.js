@@ -93,28 +93,44 @@ export async function fetchTechelonsData() {
       return data;
     } else {
       // In browser environment, use relative URL with timeout
-      // Create a promise that rejects after a timeout
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timed out')), 5000);
-      });
+      // Use AbortController to properly cancel the fetch request on timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 5000);
       
-      // Create the fetch promise
-      const fetchPromise = fetch('/api/techelons');
-      
-      // Race the fetch against the timeout
-      const response = await Promise.race([fetchPromise, timeoutPromise]);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch Techelons data: ${response.status} ${response.statusText}`);
+      try {
+        // Create the fetch promise with abort signal
+        const response = await fetch('/api/techelons', {
+          signal: controller.signal
+        });
+        
+        // Clear the timeout since fetch completed
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch Techelons data: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        // Update cache
+        techelonsDataCache = data;
+        techelonsDataCacheTimestamp = now;
+        
+        return data;
+      } catch (error) {
+        // Clear the timeout if there was an error
+        clearTimeout(timeoutId);
+        
+        // Handle abort error specifically
+        if (error.name === 'AbortError') {
+          throw new Error('Request timed out after 5 seconds. Please check your network connection and try again.');
+        }
+        
+        // Re-throw other errors to be caught by the outer try-catch
+        throw error;
       }
-      
-      const data = await response.json();
-      
-      // Update cache
-      techelonsDataCache = data;
-      techelonsDataCacheTimestamp = now;
-      
-      return data;
     }
   } catch (error) {
     console.error('Error fetching Techelons data:', error);

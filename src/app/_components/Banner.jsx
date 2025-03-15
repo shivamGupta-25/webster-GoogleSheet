@@ -78,7 +78,22 @@ const Banner = () => {
   }, [router, bannerContent.buttonLink]);
 
   if (isLoading) {
-    return <div className="flex items-center justify-center min-h-[300px]">Loading...</div>;
+    return (
+      <section className="container px-8 mx-auto my-4 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center text-center">
+          <div className="flex flex-col items-center justify-center text-center w-full md:pl-10">
+            <div className="h-24 w-3/4 bg-gray-200 animate-pulse rounded-lg mb-4"></div>
+            <div className="h-6 w-1/2 bg-gray-200 animate-pulse rounded-lg mb-2"></div>
+            <div className="h-8 w-2/3 bg-gray-200 animate-pulse rounded-lg mb-4"></div>
+            <div className="h-24 w-full bg-gray-200 animate-pulse rounded-lg mb-6"></div>
+            <div className="h-12 w-40 bg-gray-200 animate-pulse rounded-[30px]"></div>
+          </div>
+          <div className="flex items-center justify-center">
+            <div className="h-[350px] w-[350px] bg-gray-200 animate-pulse rounded-full"></div>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (
