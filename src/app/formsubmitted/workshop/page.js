@@ -1,6 +1,6 @@
 "use client"
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Instagram, Linkedin, Home, Check, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -306,7 +306,9 @@ const LoadingFallback = () => (
 export default function RegistrationSuccessPage() {
     return (
         <main className="min-h-screen bg-gray-100 py-12 px-4">
-            <RegistrationContent />
+            <Suspense fallback={<LoadingFallback />}>
+                <RegistrationContent />
+            </Suspense>
         </main>
     );
 }
