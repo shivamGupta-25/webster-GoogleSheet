@@ -20,24 +20,29 @@ export async function fetchSiteContent() {
   try {
     // Determine if we're in a browser or server environment
     const isServer = typeof window === 'undefined';
-    let url;
     
     if (isServer) {
       // In server environment, use absolute URL with the host from environment variable
       // or connect directly to the database
-      const { default: connectToDatabase } = await import('@/lib/mongodb');
-      const { default: SiteContent } = await import('@/models/SiteContent');
-      
-      await connectToDatabase();
-      const content = await SiteContent.findOne({});
-      
-      if (!content) {
-        console.warn('No site content found in database');
+      try {
+        const { default: connectToDatabase } = await import('@/lib/mongodb');
+        const { default: SiteContent } = await import('@/models/SiteContent');
+        
+        await connectToDatabase();
+        const content = await SiteContent.findOne({});
+        
+        if (!content) {
+          console.warn('No site content found in database');
+          return null;
+        }
+        
+        siteContentCache = content;
+        return content;
+      } catch (dbError) {
+        console.error('Error connecting to database during build:', dbError);
+        // During build time, return null instead of throwing an error
         return null;
       }
-      
-      siteContentCache = content;
-      return content;
     } else {
       // In browser environment, use relative URL
       const response = await fetch('/api/content');

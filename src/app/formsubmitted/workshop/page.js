@@ -8,6 +8,9 @@ import { motion, AnimatePresence } from "framer-motion"
 import { fetchSiteContent } from '@/lib/utils';
 import confetti from 'canvas-confetti'
 
+// Make this page dynamic to avoid prerendering during build
+export const dynamic = 'force-dynamic';
+
 const SuccessIcon = () => (
     <motion.div
         initial={{ scale: 0 }}
@@ -66,22 +69,25 @@ const RegistrationContent = () => {
     useEffect(() => {
         const loadContent = async () => {
             try {
-                const content = await fetchSiteContent();
-                if (content && content.workshop) {
-                    setWorkshopData(content.workshop);
-                } else {
-                    // If workshop data is not found, try to set it up
-                    try {
-                        // In the browser, we need to use the API endpoint
-                        const setupResponse = await fetch('/api/workshop/setup');
-                        if (setupResponse.ok) {
-                            const setupData = await setupResponse.json();
-                            if (setupData.data) {
-                                setWorkshopData(setupData.data);
+                // Only run in browser environment
+                if (typeof window !== 'undefined') {
+                    const content = await fetchSiteContent();
+                    if (content && content.workshop) {
+                        setWorkshopData(content.workshop);
+                    } else {
+                        // If workshop data is not found, try to set it up
+                        try {
+                            // In the browser, we need to use the API endpoint
+                            const setupResponse = await fetch('/api/workshop/setup');
+                            if (setupResponse.ok) {
+                                const setupData = await setupResponse.json();
+                                if (setupData.data) {
+                                    setWorkshopData(setupData.data);
+                                }
                             }
+                        } catch (setupError) {
+                            console.error('Error setting up workshop data:', setupError);
                         }
-                    } catch (setupError) {
-                        console.error('Error setting up workshop data:', setupError);
                     }
                 }
             } catch (error) {
