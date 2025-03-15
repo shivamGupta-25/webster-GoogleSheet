@@ -12,6 +12,7 @@ import { toast } from "react-hot-toast";
 import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { fetchSiteContent } from '@/lib/utils';
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Email validation schema
 const emailSchema = z.string()
@@ -258,9 +259,13 @@ export default function WorkshopRegistrationPage() {
                     )}
 
                     {isLoading ? (
-                        <div className="flex flex-col items-center justify-center py-8">
-                            <div className="w-12 h-12 border-t-4 border-blue-500 border-solid rounded-full animate-spin mb-4"></div>
-                            <p className="text-gray-600">Loading workshop data...</p>
+                        <div className="space-y-6">
+                            <Skeleton className="h-10 w-full rounded-md" />
+                            {[...Array(5)].map((_, i) => (
+                                <Skeleton key={i} className="h-10 w-full rounded-md" />
+                            ))}
+                            <Skeleton className="h-24 w-full rounded-md" />
+                            <Skeleton className="h-10 w-full rounded-md" />
                         </div>
                     ) : workshopData ? (
                         <form onSubmit={handleSubmit(handleRegistration)} className="space-y-6">

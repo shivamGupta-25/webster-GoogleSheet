@@ -11,10 +11,11 @@ import toast from "react-hot-toast";
 export function ImageUpload({
   value,
   onChange,
-  label = "Image",
+  label = "",
   description = "Upload an image",
   previewWidth = 200,
   previewHeight = 200,
+  aspectRatio = "square",
   className = "",
   section = "misc",
 }) {
@@ -22,6 +23,32 @@ export function ImageUpload({
   const [isUploading, setIsUploading] = useState(false);
   const [imageError, setImageError] = useState(false);
   const fileInputRef = useRef(null);
+
+  // Calculate height based on aspect ratio and width
+  const getPreviewDimensions = () => {
+    let width = previewWidth;
+    let height = previewHeight;
+    
+    if (aspectRatio === "16:9") {
+      height = Math.round(width * (9/16));
+    } else if (aspectRatio === "3:4") {
+      height = Math.round(width * (4/3));
+    }
+    
+    return { width, height };
+  };
+
+  const { width, height } = getPreviewDimensions();
+
+  // Function to calculate responsive height based on actual width
+  const getResponsiveHeight = (actualWidth) => {
+    if (aspectRatio === "16:9") {
+      return Math.round(actualWidth * (9/16));
+    } else if (aspectRatio === "3:4") {
+      return Math.round(actualWidth * (4/3));
+    }
+    return height;
+  };
 
   // Update preview when value changes externally
   useEffect(() => {
@@ -106,9 +133,9 @@ export function ImageUpload({
   };
 
   return (
-    <div className={`space-y-2 ${className}`}>
-      <Label>{label}</Label>
-      <div className="flex flex-col space-y-2">
+    <div className={`space-y-2 ${className} flex flex-col items-center`}>
+      <Label className="self-center">{label}</Label>
+      <div className="flex flex-col space-y-2 w-full">
         <div className="flex items-center gap-2">
           <Input
             ref={fileInputRef}
@@ -139,37 +166,35 @@ export function ImageUpload({
             </Button>
           )}
         </div>
-        <Input
-          type="text"
-          value={value || ""}
-          onChange={(e) => {
-            onChange(e.target.value);
-            setPreview(e.target.value);
-          }}
-          placeholder="Or enter image URL directly"
-          disabled={isUploading}
-        />
       </div>
-      <p className="text-sm text-gray-500">{description}</p>
+      <p className="text-sm text-gray-500 text-center">{description}</p>
       {preview && (
-        <div className="mt-4 relative border rounded-md overflow-hidden" style={{ width: previewWidth, height: previewHeight }}>
-          {imageError ? (
-            <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-              <div className="text-center">
-                <ImageIcon className="h-12 w-12 mx-auto text-gray-400" />
-                <p className="mt-2 text-sm text-gray-500">Image failed to load</p>
+        <div className="w-full flex justify-center">
+          <div 
+            className="mt-4 relative border rounded-md overflow-hidden w-full mx-auto" 
+            style={{ 
+              maxWidth: `${width}px`,
+              aspectRatio: aspectRatio === "16:9" ? "16/9" : aspectRatio === "3:4" ? "3/4" : "1/1"
+            }}
+          >
+            {imageError ? (
+              <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+                <div className="text-center">
+                  <ImageIcon className="h-12 w-12 mx-auto text-gray-400" />
+                  <p className="mt-2 text-sm text-gray-500">Image failed to load</p>
+                </div>
               </div>
-            </div>
-          ) : (
-            <Image
-              src={preview}
-              alt={label}
-              fill
-              className="object-cover"
-              onError={handleImageError}
-              unoptimized={preview.startsWith('http')}
-            />
-          )}
+            ) : (
+              <Image
+                src={preview}
+                alt={label}
+                fill
+                className="object-cover"
+                onError={handleImageError}
+                unoptimized={preview.startsWith('http')}
+              />
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -5,41 +5,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Save, PlusCircle, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ImageUpload } from "@/components/ui/image-upload";
 
 export default function ContentManagement() {
-  const router = useRouter();
   const [content, setContent] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState("banner");
-  
-  // Define placeholder image URLs
-  const PLACEHOLDER_IMAGES = {
-    banner: "https://placehold.co/600x400/333/white?text=Banner+Logo",
-    profile: "https://placehold.co/300x300/333/white?text=Profile+Photo",
-    event: "https://placehold.co/600x400/333/white?text=Event+Image"
-  };
   
   const [newMember, setNewMember] = useState({
     name: "",
     role: "",
-    image: PLACEHOLDER_IMAGES.profile,
+    image: "",
     linkedin: null
   });
 
   const [newEvent, setNewEvent] = useState({
     title: "",
-    imageUrl: PLACEHOLDER_IMAGES.event
+    imageUrl: ""
   });
 
   // Load content on component mount
@@ -65,11 +53,7 @@ export default function ContentManagement() {
           banner: {
             title: "",
             subtitle: "",
-            institution: "",
-            description: "",
-            buttonText: "",
-            buttonLink: "",
-            logoImage: PLACEHOLDER_IMAGES.banner
+            logoImage: ""
           },
           about: {
             title: "",
@@ -84,22 +68,6 @@ export default function ContentManagement() {
             title: "",
             description: "",
             events: []
-          },
-          workshop: {
-            title: "",
-            shortDescription: "",
-            isRegistrationOpen: true,
-            formSubmittedLink: "",
-            details: [],
-            bannerImage: PLACEHOLDER_IMAGES.event,
-            whatsappGroupLink: "",
-            socialMedia: {
-              instagram: "",
-              linkedin: ""
-            },
-            emailNotification: {
-              subject: ""
-            }
           }
         });
       }
@@ -250,7 +218,7 @@ export default function ContentManagement() {
     setNewMember({
       name: "",
       role: "",
-      image: PLACEHOLDER_IMAGES.profile,
+      image: "",
       linkedin: null
     });
     
@@ -310,23 +278,18 @@ export default function ContentManagement() {
     }));
   };
 
-  const resetNewEventImage = (placeholderPath) => {
+  const resetNewEventImage = () => {
     setNewEvent(prev => ({
       ...prev,
-      imageUrl: placeholderPath
+      imageUrl: ""
     }));
-    toast.success("Event image reset to placeholder");
+    toast.success("Event image removed");
   };
 
   const addEvent = () => {
     // Validate new event data
     if (!newEvent.title.trim()) {
       toast.error("Please enter a title for the new event");
-      return;
-    }
-
-    if (!newEvent.imageUrl || newEvent.imageUrl === PLACEHOLDER_IMAGES.event) {
-      toast.error("Please upload an image for the event");
       return;
     }
 
@@ -343,7 +306,7 @@ export default function ContentManagement() {
         return prevContent;
       }
 
-      const updatedContent = {
+      return {
         ...prevContent,
         pastEvents: {
           ...prevContent.pastEvents,
@@ -353,15 +316,12 @@ export default function ContentManagement() {
           ],
         },
       };
-
-      console.log('Updated content:', updatedContent);
-      return updatedContent;
     });
     
     // Reset the new event form
     setNewEvent({
       title: "",
-      imageUrl: PLACEHOLDER_IMAGES.event
+      imageUrl: ""
     });
     
     toast.success("New event added successfully!");
@@ -411,18 +371,18 @@ export default function ContentManagement() {
   };
 
   // Function to reset an image to placeholder
-  const resetImageToPlaceholder = (section, field, placeholderPath) => {
-    handleInputChange(section, field, placeholderPath);
-    toast.success(`${field} reset to placeholder image`);
+  const resetImageToPlaceholder = (section, field) => {
+    handleInputChange(section, field, "");
+    toast.success(`${field} image removed`);
   };
 
   // Function to reset new member image to placeholder
-  const resetNewMemberImage = (placeholderPath) => {
+  const resetNewMemberImage = () => {
     setNewMember(prev => ({
       ...prev,
-      image: placeholderPath
+      image: ""
     }));
-    toast.success("Member image reset to placeholder");
+    toast.success("Member image removed");
   };
 
   if (isLoading) {
@@ -434,15 +394,15 @@ export default function ContentManagement() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Content Management</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Content Management</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Manage your website's content and settings
           </p>
         </div>
-        <Button onClick={saveContent} disabled={isSaving}>
+        <Button onClick={saveContent} disabled={isSaving} className="w-full sm:w-auto">
           {isSaving ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -460,15 +420,17 @@ export default function ContentManagement() {
       <Separator />
 
       <Tabs defaultValue="banner" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 lg:w-[400px]">
-          <TabsTrigger value="banner">Banner</TabsTrigger>
-          <TabsTrigger value="about">About</TabsTrigger>
-          <TabsTrigger value="council">Council</TabsTrigger>
-          <TabsTrigger value="events">Events</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto pb-2">
+          <TabsList className="grid w-full grid-cols-4 min-w-[300px] max-w-full lg:w-[400px]">
+            <TabsTrigger value="banner">Banner</TabsTrigger>
+            <TabsTrigger value="about">About</TabsTrigger>
+            <TabsTrigger value="council">Council</TabsTrigger>
+            <TabsTrigger value="events">Events</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="banner" className="space-y-4">
-          <Card>
+          <Card className="w-full">
             <CardHeader>
               <CardTitle>Banner Section</CardTitle>
               <CardDescription>
@@ -492,12 +454,16 @@ export default function ContentManagement() {
                   onChange={(e) => handleInputChange("banner", "subtitle", e.target.value)}
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 max-w-full">
                 <Label>Banner Image</Label>
                 <ImageUpload
-                  value={content.banner.image}
-                  onChange={(url) => handleInputChange("banner", "image", url)}
-                  onRemove={() => resetImageToPlaceholder("banner", "image", PLACEHOLDER_IMAGES.banner)}
+                  value={content.banner.logoImage}
+                  onChange={(url) => handleInputChange("banner", "logoImage", url)}
+                  onRemove={() => resetImageToPlaceholder("banner", "logoImage")}
+                  previewWidth={300}
+                  aspectRatio="3:4"
+                  className="w-full"
+                  description="Upload a banner image (3:4 aspect ratio recommended)"
                 />
               </div>
             </CardContent>
@@ -505,7 +471,7 @@ export default function ContentManagement() {
         </TabsContent>
 
         <TabsContent value="about" className="space-y-4">
-          <Card>
+          <Card className="w-full">
             <CardHeader>
               <CardTitle>About Section</CardTitle>
               <CardDescription>
@@ -523,32 +489,37 @@ export default function ContentManagement() {
               </div>
               <div className="space-y-2">
                 <Label>About Paragraphs</Label>
-                <ScrollArea className="h-[400px] rounded-md border p-4">
+                <div className="space-y-4 rounded-md border p-2 sm:p-4">
                   <div className="space-y-4">
                     {content.about.paragraphs.map((paragraph, index) => (
                       <div key={paragraph.id} className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => moveParagraphUp(index)}
-                            disabled={index === 0}
-                          >
-                            <ArrowUp className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => moveParagraphDown(index)}
-                            disabled={index === content.about.paragraphs.length - 1}
-                          >
-                            <ArrowDown className="h-4 w-4" />
-                          </Button>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => moveParagraphUp(index)}
+                              disabled={index === 0}
+                              className="h-8 w-8"
+                            >
+                              <ArrowUp className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => moveParagraphDown(index)}
+                              disabled={index === content.about.paragraphs.length - 1}
+                              className="h-8 w-8"
+                            >
+                              <ArrowDown className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <span className="text-xs text-muted-foreground">Paragraph {index + 1}</span>
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => removeParagraph(index)}
-                            className="text-destructive"
+                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -561,7 +532,7 @@ export default function ContentManagement() {
                       </div>
                     ))}
                   </div>
-                </ScrollArea>
+                </div>
                 <Button
                   variant="outline"
                   onClick={addParagraph}
@@ -576,7 +547,7 @@ export default function ContentManagement() {
         </TabsContent>
 
         <TabsContent value="council" className="space-y-4">
-          <Card>
+          <Card className="w-full">
             <CardHeader>
               <CardTitle>Council Members</CardTitle>
               <CardDescription>
@@ -584,12 +555,12 @@ export default function ContentManagement() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {content.council.members.map((member, index) => (
                   <Card key={index}>
-                    <CardContent className="pt-6">
+                    <CardContent>
                       <div className="space-y-4">
-                        <div className="relative aspect-square w-full overflow-hidden rounded-lg">
+                        <div className="relative w-full overflow-hidden rounded-lg" style={{ aspectRatio: "3/4" }}>
                           <Image
                             src={member.image}
                             alt={member.name}
@@ -636,7 +607,7 @@ export default function ContentManagement() {
 
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Add New Member</h3>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label>Name</Label>
                     <Input
@@ -663,7 +634,10 @@ export default function ContentManagement() {
                     <ImageUpload
                       value={newMember.image}
                       onChange={(url) => handleNewMemberChange("image", url)}
-                      onRemove={() => resetNewMemberImage(PLACEHOLDER_IMAGES.profile)}
+                      onRemove={() => resetNewMemberImage()}
+                      previewWidth={200}
+                      aspectRatio="3:4"
+                      description="Upload a profile image (3:4 aspect ratio recommended)"
                     />
                   </div>
                 </div>
@@ -680,7 +654,7 @@ export default function ContentManagement() {
         </TabsContent>
 
         <TabsContent value="events" className="space-y-4">
-          <Card>
+          <Card className="w-full">
             <CardHeader>
               <CardTitle>Past Events</CardTitle>
               <CardDescription>
@@ -688,12 +662,12 @@ export default function ContentManagement() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                 {content.pastEvents.events.map((event, index) => (
                   <Card key={index}>
-                    <CardContent className="pt-6">
+                    <CardContent>
                       <div className="space-y-4">
-                        <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+                        <div className="relative w-full overflow-hidden rounded-lg" style={{ aspectRatio: "16/9" }}>
                           {event.imageUrl && (
                             <Image
                               src={event.imageUrl}
@@ -728,7 +702,7 @@ export default function ContentManagement() {
 
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Add New Event</h3>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label>Title</Label>
                     <Input
@@ -741,7 +715,10 @@ export default function ContentManagement() {
                     <ImageUpload
                       value={newEvent.imageUrl}
                       onChange={(url) => handleNewEventChange("imageUrl", url)}
-                      onRemove={() => resetNewEventImage(PLACEHOLDER_IMAGES.event)}
+                      onRemove={() => resetNewEventImage()}
+                      previewWidth={300}
+                      aspectRatio="16:9"
+                      description="Upload an event image (16:9 aspect ratio recommended)"
                     />
                   </div>
                 </div>

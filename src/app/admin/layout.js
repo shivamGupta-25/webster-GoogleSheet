@@ -5,15 +5,59 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { Menu, Home, FileText, Users, Settings, LogOut } from "lucide-react";
-import { useState } from "react";
+import { Menu, X, Home, FileText, Users, Settings, LogOut } from "lucide-react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  
+  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Handle responsive behavior
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 1024);
+      if (window.innerWidth < 1024) {
+        setIsCollapsed(true);
+      }
+    };
+
+    // Initial check
+    checkScreenSize();
+    
+    // Add event listener
+    window.addEventListener("resize", checkScreenSize);
+    
+    // Cleanup
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
+
+  // Close sidebar when route changes on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [pathname, isMobile]);
+
+  // Control body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (isMobile && sidebarOpen) {
+      // Prevent scrolling on the body when sidebar is open
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Re-enable scrolling when sidebar is closed
+      document.body.style.overflow = 'auto';
+    }
+    
+    // Cleanup function to ensure scroll is re-enabled when component unmounts
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isMobile, sidebarOpen]);
+
   const isActive = (path) => {
     return pathname === path;
   };
@@ -43,30 +87,48 @@ export default function AdminLayout({ children }) {
       toast.error("Failed to logout");
     }
   };
-  
+
+  // Toggle sidebar for mobile
+  const toggleSidebar = () => {
+    if (isMobile) {
+      setSidebarOpen(!sidebarOpen);
+    } else {
+      setIsCollapsed(!isCollapsed);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-background">
+      {/* Mobile overlay with blur effect */}
+      {isMobile && sidebarOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm" 
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <div className={cn(
         "fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-background transition-all duration-300",
-        isCollapsed ? "w-16" : "w-64"
+        isCollapsed && !isMobile ? "w-16" : "w-64",
+        isMobile ? (sidebarOpen ? "translate-x-0" : "-translate-x-full") : "translate-x-0"
       )}>
         <div className="flex h-14 items-center border-b px-4">
           <Button
             variant="ghost"
             size="icon"
             className="mr-2"
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={toggleSidebar}
           >
-            <Menu className="h-5 w-5" />
+            {isMobile && sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
-          {!isCollapsed && (
+          {(!isCollapsed || (isMobile && sidebarOpen)) && (
             <Link href="/" className="font-semibold">
               Websters Admin
             </Link>
           )}
         </div>
-        
+
         <ScrollArea className="flex-1">
           <nav className="space-y-1 p-2">
             {navigation.map((item) => {
@@ -80,11 +142,13 @@ export default function AdminLayout({ children }) {
                     isActive(item.href)
                       ? "bg-primary text-primary-foreground"
                       : "hover:bg-accent hover:text-accent-foreground",
-                    isCollapsed && "justify-center"
+                    isCollapsed && !isMobile && "justify-center"
                   )}
                 >
-                  <Icon className="h-5 w-5" />
-                  {!isCollapsed && <span className="ml-2">{item.name}</span>}
+                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  {(!isCollapsed || (isMobile && sidebarOpen)) && (
+                    <span className="ml-2 truncate">{item.name}</span>
+                  )}
                 </Link>
               );
             })}
@@ -96,23 +160,40 @@ export default function AdminLayout({ children }) {
             variant="ghost"
             className={cn(
               "w-full justify-start",
-              isCollapsed && "justify-center"
+              isCollapsed && !isMobile && "justify-center"
             )}
             onClick={handleLogout}
           >
-            <LogOut className="h-5 w-5" />
-            {!isCollapsed && <span className="ml-2">Logout</span>}
+            <LogOut className="h-5 w-5 flex-shrink-0" />
+            {(!isCollapsed || (isMobile && sidebarOpen)) && (
+              <span className="ml-2">Logout</span>
+            )}
           </Button>
         </div>
       </div>
 
+      {/* Mobile header */}
+      {isMobile && (
+        <div className="fixed top-0 left-0 right-0 z-30 flex h-14 items-center border-b bg-background px-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="mr-4"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <span className="font-semibold">Websters Admin</span>
+        </div>
+      )}
+
       {/* Main content */}
       <div className={cn(
         "flex-1 transition-all duration-300",
-        isCollapsed ? "ml-16" : "ml-64"
+        isMobile ? "mt-14 ml-0" : (isCollapsed ? "ml-16" : "ml-64")
       )}>
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>
     </div>
   );
-} 
+}

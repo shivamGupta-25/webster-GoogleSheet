@@ -99,9 +99,9 @@ export default function FileUpload({
             variant="outline"
             onClick={handleButtonClick}
             disabled={isSubmitting || isUploading}
-            className="flex-1"
+            className="flex-1 h-8 sm:h-10 text-xs sm:text-sm py-1 sm:py-2"
           >
-            <Upload className="mr-2 h-4 w-4" />
+            <Upload className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
             {isUploading ? "Uploading..." : "Upload College ID"}
           </Button>
           {value && (
@@ -111,16 +111,17 @@ export default function FileUpload({
               size="icon"
               onClick={handleClear}
               disabled={isSubmitting || isUploading}
+              className="h-8 w-8 sm:h-10 sm:w-10"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           )}
         </div>
         
         {fileName && (
-          <div className="flex items-center p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-            <FileIcon className="h-4 w-4 mr-2 text-blue-500" />
-            <span className="text-sm truncate">{fileName}</span>
+          <div className="flex items-center p-1 sm:p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+            <FileIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-blue-500" />
+            <span className="text-xs sm:text-sm truncate">{fileName}</span>
           </div>
         )}
         
@@ -130,6 +131,7 @@ export default function FileUpload({
           onChange={(e) => setValue("collegeIdUrl", e.target.value)}
           placeholder="Or enter file URL directly"
           disabled={isSubmitting || isUploading}
+          className="text-xs sm:text-sm h-8 sm:h-10"
         />
       </div>
     </div>

@@ -250,74 +250,57 @@ export default function RegistrationForm({
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, setIsSubmitting, setServerError, event, isTeamEvent, router]);
+  }, [event, isSubmitting, isTeamEvent, setIsSubmitting, setServerError]);
   
   return (
-    <div className="space-y-6">
-      <div className="flex items-center mb-6">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={onBack}
-          className="mr-2"
-          disabled={isSubmitting}
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Back
-        </Button>
-        
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-          Register for {event.name}
+    <div className="space-y-4 sm:space-y-6">
+      {/* Back button */}
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={onBack}
+        className="mb-2 h-8 sm:h-10 text-xs sm:text-sm px-2 sm:px-3"
+        disabled={isSubmitting}
+      >
+        <ArrowLeft className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+        Back to Events
+      </Button>
+      
+      {/* Event info */}
+      <div className="mb-4 sm:mb-6">
+        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100">
+          {event.name}
         </h2>
+        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
+          {event.description}
+        </p>
       </div>
       
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-        {/* Event Information */}
-        <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-md">
-          <h3 className="font-medium mb-2">Event Information</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-            <span className="font-medium">Event:</span> {event.name}
-          </p>
-          {event.date && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-              <span className="font-medium">Date:</span> {event.date}
-            </p>
-          )}
-          {event.time && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-              <span className="font-medium">Time:</span> {event.time}
-            </p>
-          )}
-          {isTeamEvent && (
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              <span className="font-medium">Team Size:</span> {minTeamSize} to {maxTeamSize} members
-            </p>
-          )}
-        </div>
-        
-        {/* Team Name (for team events) */}
+      {/* Registration form */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
+        {/* Team name (for team events) */}
         {isTeamEvent && (
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-xs sm:text-sm font-medium mb-1">
               Team Name <span className="text-red-500">*</span>
             </label>
             <Input
               {...register("teamName")}
               placeholder="Enter your team name"
               disabled={isSubmitting}
+              className="text-xs sm:text-sm h-8 sm:h-10"
             />
             {errors.teamName && (
-              <p className="text-red-500 text-sm mt-1">{errors.teamName.message}</p>
+              <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.teamName.message}</p>
             )}
           </div>
         )}
         
-        {/* Main Participant */}
-        <div className="border border-gray-200 dark:border-gray-700 rounded-md p-4">
-          <h3 className="font-medium mb-4">
+        {/* Main participant */}
+        <div className="bg-gray-50 dark:bg-gray-800 p-3 sm:p-4 rounded-lg">
+          <h3 className="text-sm sm:text-base font-medium mb-3 sm:mb-4">
             {isTeamEvent ? "Team Leader Information" : "Participant Information"}
           </h3>
-          
           <ParticipantForm
             register={register}
             errors={errors}
@@ -327,38 +310,27 @@ export default function RegistrationForm({
           />
         </div>
         
-        {/* Team Members (for team events) */}
+        {/* Team members (for team events) */}
         {isTeamEvent && (
-          <div className="space-y-4">
-            <h3 className="font-medium">
-              Team Members 
-              {minTeamSize > 1 && <span className="text-red-500">*</span>}
-              <span className="text-sm font-normal text-gray-600 dark:text-gray-400 ml-2">
-                ({teamMembers.length}/{maxTeamSize - 1})
-              </span>
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-sm sm:text-base font-medium">
+              Team Members {minTeamSize > 1 && <span className="text-red-500">*</span>}
             </h3>
             
-            {errors.teamMembers?.message && (
-              <p className="text-red-500 text-sm">{errors.teamMembers.message}</p>
-            )}
-            
             {teamMembers.map((_, index) => (
-              <div 
-                key={index} 
-                className="border border-gray-200 dark:border-gray-700 rounded-md p-4 relative"
-              >
-                <div className="flex justify-between items-center mb-4">
-                  <h4 className="font-medium">Team Member {index + 1}</h4>
-                  
+              <div key={index} className="bg-gray-50 dark:bg-gray-800 p-3 sm:p-4 rounded-lg relative">
+                <div className="flex justify-between items-center mb-3 sm:mb-4">
+                  <h4 className="text-xs sm:text-sm font-medium">Team Member {index + 1}</h4>
                   <Button
                     type="button"
                     variant="destructive"
                     size="sm"
                     onClick={() => removeTeamMember(index)}
                     disabled={isSubmitting || (minTeamSize > 1 && teamMembers.length <= minTeamSize - 1)}
+                    className="h-6 sm:h-8 px-2 sm:px-3 text-xs"
                   >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Remove
+                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-0 sm:mr-1" />
+                    <span className="hidden sm:inline">Remove</span>
                   </Button>
                 </div>
                 
@@ -378,58 +350,55 @@ export default function RegistrationForm({
                 variant="outline"
                 onClick={addTeamMember}
                 disabled={isSubmitting}
-                className="w-full"
+                className="w-full h-8 sm:h-10 text-xs sm:text-sm"
               >
-                <Plus className="h-4 w-4 mr-1" />
+                <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                 Add Team Member
               </Button>
+            )}
+            
+            {errors.teamMembers && errors.teamMembers.message && (
+              <p className="text-red-500 text-xs sm:text-sm">{errors.teamMembers.message}</p>
             )}
           </div>
         )}
         
-        {/* College ID Upload */}
+        {/* College ID upload */}
         <div>
-          <label className="block text-sm font-medium mb-1">
-            College ID <span className="text-red-500">*</span>
+          <label className="block text-xs sm:text-sm font-medium mb-1">
+            {isTeamEvent ? "College ID (Compile and upload all team members' IDs)" : "College ID"} <span className="text-red-500">*</span>
           </label>
           <FileUpload
             setValue={setValue}
             value={watch("collegeIdUrl")}
             isSubmitting={isSubmitting}
-            maxSizeMB={2}
           />
           {errors.collegeIdUrl && (
-            <p className="text-red-500 text-sm mt-1">{errors.collegeIdUrl.message}</p>
+            <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.collegeIdUrl.message}</p>
           )}
-          <p className="text-xs text-gray-500 mt-1">
-            Upload your college ID card (max 2MB)
-          </p>
         </div>
         
-        {/* Query */}
+        {/* Additional query */}
         <div>
-          <label className="block text-sm font-medium mb-1">
-            Any Query?
+          <label className="block text-xs sm:text-sm font-medium mb-1">
+            Any queries? (Optional)
           </label>
           <Textarea
             {...register("query")}
-            placeholder="Enter your query (optional)"
+            placeholder="Enter any questions or comments you have"
             disabled={isSubmitting}
-            className="resize-none"
-            rows={3}
+            className="text-xs sm:text-sm min-h-[60px] sm:min-h-[80px]"
           />
         </div>
         
-        {/* Submit Button */}
-        <div className="pt-4">
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Submitting..." : "Submit Registration"}
-          </Button>
-        </div>
+        {/* Submit button */}
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full h-10 sm:h-12 text-sm sm:text-base mt-2 sm:mt-4"
+        >
+          {isSubmitting ? "Submitting..." : "Submit Registration"}
+        </Button>
       </form>
     </div>
   );

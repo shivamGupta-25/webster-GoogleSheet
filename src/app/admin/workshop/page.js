@@ -10,7 +10,6 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Save, Plus, Trash2, ArrowUp, ArrowDown, AlertTriangle, Download } from "lucide-react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -246,15 +245,15 @@ export default function WorkshopManagement() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 px-4 sm:px-6 md:px-8 max-w-7xl mx-auto w-full py-4 sm:py-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Workshop Management</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Workshop Management</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Manage workshop details and registration settings
           </p>
         </div>
-        <Button onClick={saveWorkshop} disabled={isSaving}>
+        <Button onClick={saveWorkshop} disabled={isSaving} className="w-full sm:w-auto">
           {isSaving ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -274,28 +273,29 @@ export default function WorkshopManagement() {
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-xl">Basic Information</CardTitle>
+            <CardDescription className="text-sm">
               Update the workshop's basic details and registration status
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Workshop Title</Label>
+              <Label htmlFor="title" className="text-sm font-medium">Workshop Title</Label>
               <Input
                 id="title"
                 value={workshop.title}
                 onChange={(e) => handleInputChange("title", e.target.value)}
+                className="w-full"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="shortDescription">Short Description</Label>
+              <Label htmlFor="shortDescription" className="text-sm font-medium">Short Description</Label>
               <Textarea
                 id="shortDescription"
                 value={workshop.shortDescription}
                 onChange={(e) => handleInputChange("shortDescription", e.target.value)}
-                className="min-h-[100px]"
+                className="min-h-[100px] w-full"
               />
             </div>
             
@@ -305,16 +305,17 @@ export default function WorkshopManagement() {
                 checked={workshop.isRegistrationOpen}
                 onCheckedChange={(checked) => handleInputChange("isRegistrationOpen", checked)}
               />
-              <Label htmlFor="isRegistrationOpen">Registration Open</Label>
+              <Label htmlFor="isRegistrationOpen" className="text-sm font-medium">Registration Open</Label>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="whatsappGroupLink">WhatsApp Group Link</Label>
+              <Label htmlFor="whatsappGroupLink" className="text-sm font-medium">WhatsApp Group Link</Label>
               <Input
                 id="whatsappGroupLink"
                 value={workshop.whatsappGroupLink}
                 onChange={(e) => handleInputChange("whatsappGroupLink", e.target.value)}
                 placeholder="https://chat.whatsapp.com/..."
+                className="w-full"
               />
             </div>
           </CardContent>
@@ -322,8 +323,8 @@ export default function WorkshopManagement() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Banner Image</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-xl">Banner Image</CardTitle>
+            <CardDescription className="text-sm">
               Upload or update the workshop's banner image
             </CardDescription>
           </CardHeader>
@@ -332,70 +333,81 @@ export default function WorkshopManagement() {
               value={workshop.bannerImage}
               onChange={(value) => handleInputChange("bannerImage", value)}
               onRemove={() => handleInputChange("bannerImage", "")}
+              previewWidth={400}
+              aspectRatio="16:9"
+              description="Upload a banner image (16:9 aspect ratio recommended)"
             />
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Workshop Details</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-xl">Workshop Details</CardTitle>
+            <CardDescription className="text-sm">
               Add and manage workshop-specific details
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <ScrollArea className="h-[400px] rounded-md border p-4">
-              <div className="space-y-4">
-                {workshop.details.map((detail, index) => (
-                  <div key={detail.id} className="space-y-2">
-                    <div className="flex items-center gap-2">
+            <div className="space-y-4">
+              {workshop.details.map((detail, index) => (
+                <div key={detail.id} className="space-y-2 border p-3 sm:p-4 rounded-md">
+                  <div className="flex flex-wrap items-center justify-between mb-2 gap-2">
+                    <div className="font-medium text-sm sm:text-base">Detail: {index + 1}</div>
+                    <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => moveDetail(index, 'up')}
                         disabled={index === 0}
+                        className="h-7 w-7 sm:h-8 sm:w-8"
+                        aria-label="Move up"
                       >
-                        <ArrowUp className="h-4 w-4" />
+                        <ArrowUp className="h-3 w-3 sm:h-4 sm:w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => moveDetail(index, 'down')}
                         disabled={index === workshop.details.length - 1}
+                        className="h-7 w-7 sm:h-8 sm:w-8"
+                        aria-label="Move down"
                       >
-                        <ArrowDown className="h-4 w-4" />
+                        <ArrowDown className="h-3 w-3 sm:h-4 sm:w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => removeDetail(index)}
-                        className="text-destructive"
+                        className="text-destructive h-7 w-7 sm:h-8 sm:w-8"
+                        aria-label="Remove detail"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                       </Button>
                     </div>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label>Label</Label>
-                        <Input
-                          value={detail.label}
-                          onChange={(e) => handleDetailChange(index, "label", e.target.value)}
-                          placeholder="e.g., Date, Time, Location"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Value</Label>
-                        <Input
-                          value={detail.value}
-                          onChange={(e) => handleDetailChange(index, "value", e.target.value)}
-                          placeholder="Enter the value"
-                        />
-                      </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Label</Label>
+                      <Input
+                        value={detail.label}
+                        onChange={(e) => handleDetailChange(index, "label", e.target.value)}
+                        placeholder="e.g., Date, Time, Location"
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Value</Label>
+                      <Input
+                        value={detail.value}
+                        onChange={(e) => handleDetailChange(index, "value", e.target.value)}
+                        placeholder="Enter the value"
+                        className="w-full"
+                      />
                     </div>
                   </div>
-                ))}
-              </div>
-            </ScrollArea>
+                </div>
+              ))}
+            </div>
             <Button
               variant="outline"
               onClick={addNewDetail}
@@ -409,35 +421,35 @@ export default function WorkshopManagement() {
 
         <Card className="border-destructive">
           <CardHeader>
-            <CardTitle className="text-destructive flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
+            <CardTitle className="text-destructive flex items-center gap-2 text-xl">
+              <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />
               Danger Zone
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               Actions that cannot be undone
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Workshop Registration Data</Label>
-              <p className="text-sm text-muted-foreground">
+              <Label className="text-sm font-medium">Workshop Registration Data</Label>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Download or flush all workshop registration data. Flushing data cannot be undone.
               </p>
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-col sm:flex-row gap-2 mt-2">
                 <Button 
                   variant="outline" 
                   onClick={exportWorkshopRegistrationData}
                   disabled={isExportingData}
-                  className="flex-1"
+                  className="w-full sm:flex-1 text-sm"
                 >
                   {isExportingData ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                       Exporting...
                     </>
                   ) : (
                     <>
-                      <Download className="mr-2 h-4 w-4" />
+                      <Download className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                       Download as CSV
                     </>
                   )}
@@ -445,10 +457,10 @@ export default function WorkshopManagement() {
                 
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" disabled={isFlushingData} className="flex-1">
+                    <Button variant="destructive" disabled={isFlushingData} className="w-full sm:flex-1 text-sm">
                       {isFlushingData ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                           Flushing Data...
                         </>
                       ) : (
@@ -456,16 +468,16 @@ export default function WorkshopManagement() {
                       )}
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className="max-w-md mx-auto">
                     <AlertDialogHeader>
                       <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                       <AlertDialogDescription>
                         This action cannot be undone. This will permanently delete all workshop registration data from the database.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={flushWorkshopRegistrationData} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                      <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={flushWorkshopRegistrationData} className="bg-destructive text-white hover:bg-destructive/90 w-full sm:w-auto">
                         Yes, Flush All Data
                       </AlertDialogAction>
                     </AlertDialogFooter>

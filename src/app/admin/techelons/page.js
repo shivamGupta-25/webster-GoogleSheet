@@ -26,17 +26,12 @@ export default function TechelonsManagement() {
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
   
-  // Define placeholder image URLs
-  const PLACEHOLDER_IMAGES = {
-    event: "https://placehold.co/600x400/333/white?text=Event+Image"
-  };
-  
   const [newEvent, setNewEvent] = useState({
     id: "",
     name: "",
     shortDescription: "",
     description: "",
-    image: PLACEHOLDER_IMAGES.event,
+    image: "",
     category: "",
     venue: "",
     festDay: "",
@@ -213,7 +208,7 @@ export default function TechelonsManagement() {
       name: "",
       shortDescription: "",
       description: "",
-      image: PLACEHOLDER_IMAGES.event,
+      image: "",
       category: "",
       venue: "",
       festDay: "",
@@ -273,17 +268,17 @@ export default function TechelonsManagement() {
 
   // Reset image to placeholder
   const resetImageToPlaceholder = (index) => {
-    handleEventChange(index, "image", PLACEHOLDER_IMAGES.event);
-    toast.success("Image reset to placeholder");
+    handleEventChange(index, "image", "");
+    toast.success("Image reset");
   };
 
   // Reset new event image to placeholder
   const resetNewEventImage = () => {
     setNewEvent(prev => ({
       ...prev,
-      image: PLACEHOLDER_IMAGES.event
+      image: ""
     }));
-    toast.success("Image reset to placeholder");
+    toast.success("Image reset");
   };
 
   if (isLoading) {
@@ -391,430 +386,431 @@ export default function TechelonsManagement() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[600px] pr-4">
-                <div className="space-y-8">
-                  {techelonsData.events.map((event, index) => (
-                    <div key={event.id} className="space-y-4 pb-6 border-b border-gray-200">
-                      <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-semibold">{event.name}</h3>
-                        <Button 
-                          variant="destructive" 
-                          size="sm"
-                          onClick={() => removeEvent(index)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Remove
-                        </Button>
+              <div className="space-y-8">
+                {techelonsData.events.map((event, index) => (
+                  <div key={event.id} className="space-y-4 pb-6 border-b border-gray-200">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-semibold">{event.name}</h3>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => removeEvent(index)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Remove
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor={`event-id-${index}`}>Event ID (unique identifier)</Label>
+                        <Input
+                          id={`event-id-${index}`}
+                          value={event.id}
+                          onChange={(e) => handleEventChange(index, "id", e.target.value)}
+                        />
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor={`event-id-${index}`}>Event ID (unique identifier)</Label>
-                          <Input
-                            id={`event-id-${index}`}
-                            value={event.id}
-                            onChange={(e) => handleEventChange(index, "id", e.target.value)}
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor={`event-name-${index}`}>Event Name</Label>
-                          <Input
-                            id={`event-name-${index}`}
-                            value={event.name}
-                            onChange={(e) => handleEventChange(index, "name", e.target.value)}
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor={`event-short-desc-${index}`}>Short Description</Label>
-                          <Input
-                            id={`event-short-desc-${index}`}
-                            value={event.shortDescription}
-                            onChange={(e) => handleEventChange(index, "shortDescription", e.target.value)}
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor={`event-category-${index}`}>Category</Label>
-                          <Select
-                            value={event.category}
-                            onValueChange={(value) => handleEventChange(index, "category", value)}
-                          >
-                            <SelectTrigger id={`event-category-${index}`}>
-                              <SelectValue placeholder="Select category" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Object.entries(techelonsData.eventCategories).map(([key, value]) => (
-                                <SelectItem key={key} value={value}>
-                                  {key.charAt(0) + key.slice(1).toLowerCase().replace('_', ' ')}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        
-                        <div className="space-y-2 md:col-span-2">
-                          <Label htmlFor={`event-description-${index}`}>Full Description</Label>
-                          <Textarea
-                            id={`event-description-${index}`}
-                            value={event.description}
-                            onChange={(e) => handleEventChange(index, "description", e.target.value)}
-                            rows={3}
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor={`event-venue-${index}`}>Venue</Label>
-                          <Input
-                            id={`event-venue-${index}`}
-                            value={event.venue}
-                            onChange={(e) => handleEventChange(index, "venue", e.target.value)}
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor={`event-fest-day-${index}`}>Fest Day</Label>
-                          <Select
-                            value={event.festDay}
-                            onValueChange={(value) => handleEventChange(index, "festDay", value)}
-                          >
-                            <SelectTrigger id={`event-fest-day-${index}`}>
-                              <SelectValue placeholder="Select day" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Object.entries(techelonsData.festDays).map(([key, value]) => (
-                                <SelectItem key={key} value={value}>
-                                  {key.replace('_', ' ')}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor={`event-date-${index}`}>Date</Label>
-                          <Input
-                            id={`event-date-${index}`}
-                            value={event.date}
-                            onChange={(e) => handleEventChange(index, "date", e.target.value)}
-                            placeholder="April 10, 2025"
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor={`event-time-${index}`}>Time</Label>
-                          <Input
-                            id={`event-time-${index}`}
-                            value={event.time}
-                            onChange={(e) => handleEventChange(index, "time", e.target.value)}
-                            placeholder="10:00 AM"
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor={`event-duration-${index}`}>Duration</Label>
-                          <Input
-                            id={`event-duration-${index}`}
-                            value={event.duration}
-                            onChange={(e) => handleEventChange(index, "duration", e.target.value)}
-                            placeholder="2 hours"
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor={`event-reg-status-${index}`}>Registration Status</Label>
-                          <Select
-                            value={event.registrationStatus}
-                            onValueChange={(value) => handleEventChange(index, "registrationStatus", value)}
-                          >
-                            <SelectTrigger id={`event-reg-status-${index}`}>
-                              <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Object.entries(techelonsData.registrationStatus).map(([key, value]) => (
-                                <SelectItem key={key} value={value}>
-                                  {key.replace('_', ' ')}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor={`event-team-min-${index}`}>Min Team Size</Label>
-                          <Input
-                            id={`event-team-min-${index}`}
-                            type="number"
-                            min="1"
-                            value={event.teamSize?.min || 1}
-                            onChange={(e) => handleEventChange(index, "teamSize.min", e.target.value)}
-                          />
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor={`event-team-max-${index}`}>Max Team Size</Label>
-                          <Input
-                            id={`event-team-max-${index}`}
-                            type="number"
-                            min="1"
-                            value={event.teamSize?.max || 1}
-                            onChange={(e) => handleEventChange(index, "teamSize.max", e.target.value)}
-                          />
-                        </div>
-                        
-                        <div className="space-y-2 md:col-span-2">
-                          <Label>Event Image</Label>
-                          <ImageUpload
-                            value={event.image}
-                            onChange={(url) => handleEventChange(index, "image", url)}
-                            onRemove={() => resetImageToPlaceholder(index)}
-                          />
-                        </div>
-                        
-                        {/* Additional Fields for Prizes */}
-                        <div className="space-y-2 md:col-span-2">
-                          <Label>Prizes</Label>
-                          <div className="space-y-4 border rounded-md p-4">
-                            {event.prizes && event.prizes.map((prize, prizeIndex) => (
-                              <div key={prizeIndex} className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b border-gray-200 last:border-0">
-                                <div className="space-y-2">
-                                  <Label htmlFor={`event-prize-position-${index}-${prizeIndex}`}>Position</Label>
-                                  <Input
-                                    id={`event-prize-position-${index}-${prizeIndex}`}
-                                    value={prize.position}
-                                    onChange={(e) => {
-                                      const updatedPrizes = [...event.prizes];
-                                      updatedPrizes[prizeIndex] = {
-                                        ...updatedPrizes[prizeIndex],
-                                        position: e.target.value
-                                      };
-                                      handleEventChange(index, "prizes", updatedPrizes);
-                                    }}
-                                    placeholder="1st"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor={`event-prize-reward-${index}-${prizeIndex}`}>Reward</Label>
-                                  <Input
-                                    id={`event-prize-reward-${index}-${prizeIndex}`}
-                                    value={prize.reward}
-                                    onChange={(e) => {
-                                      const updatedPrizes = [...event.prizes];
-                                      updatedPrizes[prizeIndex] = {
-                                        ...updatedPrizes[prizeIndex],
-                                        reward: e.target.value
-                                      };
-                                      handleEventChange(index, "prizes", updatedPrizes);
-                                    }}
-                                    placeholder="₹5,000 + Certificate"
-                                  />
-                                </div>
-                                <div className="md:col-span-2">
-                                  <Button 
-                                    variant="destructive" 
-                                    size="sm"
-                                    onClick={() => {
-                                      const updatedPrizes = event.prizes.filter((_, i) => i !== prizeIndex);
-                                      handleEventChange(index, "prizes", updatedPrizes);
-                                    }}
-                                  >
-                                    <Trash2 className="h-4 w-4 mr-1" />
-                                    Remove Prize
-                                  </Button>
-                                </div>
-                              </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`event-name-${index}`}>Event Name</Label>
+                        <Input
+                          id={`event-name-${index}`}
+                          value={event.name}
+                          onChange={(e) => handleEventChange(index, "name", e.target.value)}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`event-short-desc-${index}`}>Short Description</Label>
+                        <Input
+                          id={`event-short-desc-${index}`}
+                          value={event.shortDescription}
+                          onChange={(e) => handleEventChange(index, "shortDescription", e.target.value)}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`event-category-${index}`}>Category</Label>
+                        <Select
+                          value={event.category}
+                          onValueChange={(value) => handleEventChange(index, "category", value)}
+                        >
+                          <SelectTrigger id={`event-category-${index}`}>
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(techelonsData.eventCategories).map(([key, value]) => (
+                              <SelectItem key={key} value={value}>
+                                {key.charAt(0) + key.slice(1).toLowerCase().replace('_', ' ')}
+                              </SelectItem>
                             ))}
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => {
-                                const updatedPrizes = [...(event.prizes || []), { position: "", reward: "" }];
-                                handleEventChange(index, "prizes", updatedPrizes);
-                              }}
-                            >
-                              <PlusCircle className="h-4 w-4 mr-1" />
-                              Add Prize
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        {/* Additional Fields for Coordinators */}
-                        <div className="space-y-2 md:col-span-2">
-                          <Label>Coordinators</Label>
-                          <div className="space-y-4 border rounded-md p-4">
-                            {event.coordinators && event.coordinators.map((coordinator, coordIndex) => (
-                              <div key={coordIndex} className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-4 border-b border-gray-200 last:border-0">
-                                <div className="space-y-2">
-                                  <Label htmlFor={`event-coord-name-${index}-${coordIndex}`}>Name</Label>
-                                  <Input
-                                    id={`event-coord-name-${index}-${coordIndex}`}
-                                    value={coordinator.name}
-                                    onChange={(e) => {
-                                      const updatedCoordinators = [...event.coordinators];
-                                      updatedCoordinators[coordIndex] = {
-                                        ...updatedCoordinators[coordIndex],
-                                        name: e.target.value
-                                      };
-                                      handleEventChange(index, "coordinators", updatedCoordinators);
-                                    }}
-                                    placeholder="John Doe"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor={`event-coord-email-${index}-${coordIndex}`}>Email</Label>
-                                  <Input
-                                    id={`event-coord-email-${index}-${coordIndex}`}
-                                    value={coordinator.email}
-                                    onChange={(e) => {
-                                      const updatedCoordinators = [...event.coordinators];
-                                      updatedCoordinators[coordIndex] = {
-                                        ...updatedCoordinators[coordIndex],
-                                        email: e.target.value
-                                      };
-                                      handleEventChange(index, "coordinators", updatedCoordinators);
-                                    }}
-                                    placeholder="john.doe@example.com"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label htmlFor={`event-coord-phone-${index}-${coordIndex}`}>Phone</Label>
-                                  <Input
-                                    id={`event-coord-phone-${index}-${coordIndex}`}
-                                    value={coordinator.phone}
-                                    onChange={(e) => {
-                                      const updatedCoordinators = [...event.coordinators];
-                                      updatedCoordinators[coordIndex] = {
-                                        ...updatedCoordinators[coordIndex],
-                                        phone: e.target.value
-                                      };
-                                      handleEventChange(index, "coordinators", updatedCoordinators);
-                                    }}
-                                    placeholder="9876543210"
-                                  />
-                                </div>
-                                <div className="md:col-span-3">
-                                  <Button 
-                                    variant="destructive" 
-                                    size="sm"
-                                    onClick={() => {
-                                      const updatedCoordinators = event.coordinators.filter((_, i) => i !== coordIndex);
-                                      handleEventChange(index, "coordinators", updatedCoordinators);
-                                    }}
-                                  >
-                                    <Trash2 className="h-4 w-4 mr-1" />
-                                    Remove Coordinator
-                                  </Button>
-                                </div>
-                              </div>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor={`event-description-${index}`}>Full Description</Label>
+                        <Textarea
+                          id={`event-description-${index}`}
+                          value={event.description}
+                          onChange={(e) => handleEventChange(index, "description", e.target.value)}
+                          rows={3}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`event-venue-${index}`}>Venue</Label>
+                        <Input
+                          id={`event-venue-${index}`}
+                          value={event.venue}
+                          onChange={(e) => handleEventChange(index, "venue", e.target.value)}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`event-fest-day-${index}`}>Fest Day</Label>
+                        <Select
+                          value={event.festDay}
+                          onValueChange={(value) => handleEventChange(index, "festDay", value)}
+                        >
+                          <SelectTrigger id={`event-fest-day-${index}`}>
+                            <SelectValue placeholder="Select day" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(techelonsData.festDays).map(([key, value]) => (
+                              <SelectItem key={key} value={value}>
+                                {key.replace('_', ' ')}
+                              </SelectItem>
                             ))}
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => {
-                                const updatedCoordinators = [...(event.coordinators || []), { name: "", email: "", phone: "" }];
-                                handleEventChange(index, "coordinators", updatedCoordinators);
-                              }}
-                            >
-                              <PlusCircle className="h-4 w-4 mr-1" />
-                              Add Coordinator
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        {/* Additional Fields for Rules */}
-                        <div className="space-y-2 md:col-span-2">
-                          <Label>Rules</Label>
-                          <div className="space-y-4 border rounded-md p-4">
-                            {event.rules && event.rules.map((rule, ruleIndex) => (
-                              <div key={ruleIndex} className="flex items-center gap-2 pb-2">
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`event-date-${index}`}>Date</Label>
+                        <Input
+                          id={`event-date-${index}`}
+                          value={event.date}
+                          onChange={(e) => handleEventChange(index, "date", e.target.value)}
+                          placeholder="April 10, 2025"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`event-time-${index}`}>Time</Label>
+                        <Input
+                          id={`event-time-${index}`}
+                          value={event.time}
+                          onChange={(e) => handleEventChange(index, "time", e.target.value)}
+                          placeholder="10:00 AM"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`event-duration-${index}`}>Duration</Label>
+                        <Input
+                          id={`event-duration-${index}`}
+                          value={event.duration}
+                          onChange={(e) => handleEventChange(index, "duration", e.target.value)}
+                          placeholder="2 hours"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`event-reg-status-${index}`}>Registration Status</Label>
+                        <Select
+                          value={event.registrationStatus}
+                          onValueChange={(value) => handleEventChange(index, "registrationStatus", value)}
+                        >
+                          <SelectTrigger id={`event-reg-status-${index}`}>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(techelonsData.registrationStatus).map(([key, value]) => (
+                              <SelectItem key={key} value={value}>
+                                {key.replace('_', ' ')}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`event-team-min-${index}`}>Min Team Size</Label>
+                        <Input
+                          id={`event-team-min-${index}`}
+                          type="number"
+                          min="1"
+                          value={event.teamSize?.min || 1}
+                          onChange={(e) => handleEventChange(index, "teamSize.min", e.target.value)}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`event-team-max-${index}`}>Max Team Size</Label>
+                        <Input
+                          id={`event-team-max-${index}`}
+                          type="number"
+                          min="1"
+                          value={event.teamSize?.max || 1}
+                          onChange={(e) => handleEventChange(index, "teamSize.max", e.target.value)}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2 md:col-span-2">
+                        <Label>Event Image</Label>
+                        <ImageUpload
+                          value={event.image}
+                          onChange={(url) => handleEventChange(index, "image", url)}
+                          onRemove={() => resetImageToPlaceholder(index)}
+                          previewWidth={300}
+                          aspectRatio="16:9"
+                          description="Upload an event image (16:9 aspect ratio recommended)"
+                        />
+                      </div>
+                      
+                      {/* Additional Fields for Prizes */}
+                      <div className="space-y-2 md:col-span-2">
+                        <Label>Prizes</Label>
+                        <div className="space-y-4 border rounded-md p-4">
+                          {event.prizes && event.prizes.map((prize, prizeIndex) => (
+                            <div key={prizeIndex} className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b border-gray-200 last:border-0">
+                              <div className="space-y-2">
+                                <Label htmlFor={`event-prize-position-${index}-${prizeIndex}`}>Position</Label>
                                 <Input
-                                  value={rule}
+                                  id={`event-prize-position-${index}-${prizeIndex}`}
+                                  value={prize.position}
                                   onChange={(e) => {
-                                    const updatedRules = [...event.rules];
-                                    updatedRules[ruleIndex] = e.target.value;
-                                    handleEventChange(index, "rules", updatedRules);
+                                    const updatedPrizes = [...event.prizes];
+                                    updatedPrizes[prizeIndex] = {
+                                      ...updatedPrizes[prizeIndex],
+                                      position: e.target.value
+                                    };
+                                    handleEventChange(index, "prizes", updatedPrizes);
                                   }}
-                                  placeholder="Rule description"
+                                  placeholder="1st"
                                 />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor={`event-prize-reward-${index}-${prizeIndex}`}>Reward</Label>
+                                <Input
+                                  id={`event-prize-reward-${index}-${prizeIndex}`}
+                                  value={prize.reward}
+                                  onChange={(e) => {
+                                    const updatedPrizes = [...event.prizes];
+                                    updatedPrizes[prizeIndex] = {
+                                      ...updatedPrizes[prizeIndex],
+                                      reward: e.target.value
+                                    };
+                                    handleEventChange(index, "prizes", updatedPrizes);
+                                  }}
+                                  placeholder="₹5,000 + Certificate"
+                                />
+                              </div>
+                              <div className="md:col-span-2">
                                 <Button 
                                   variant="destructive" 
-                                  size="icon"
+                                  size="sm"
                                   onClick={() => {
-                                    const updatedRules = event.rules.filter((_, i) => i !== ruleIndex);
-                                    handleEventChange(index, "rules", updatedRules);
+                                    const updatedPrizes = event.prizes.filter((_, i) => i !== prizeIndex);
+                                    handleEventChange(index, "prizes", updatedPrizes);
                                   }}
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  Remove Prize
                                 </Button>
                               </div>
-                            ))}
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => {
-                                const updatedRules = [...(event.rules || []), ""];
-                                handleEventChange(index, "rules", updatedRules);
-                              }}
-                            >
-                              <PlusCircle className="h-4 w-4 mr-1" />
-                              Add Rule
-                            </Button>
-                          </div>
+                            </div>
+                          ))}
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              const updatedPrizes = [...(event.prizes || []), { position: "", reward: "" }];
+                              handleEventChange(index, "prizes", updatedPrizes);
+                            }}
+                          >
+                            <PlusCircle className="h-4 w-4 mr-1" />
+                            Add Prize
+                          </Button>
                         </div>
-                        
-                        {/* Additional Fields for Instructions */}
-                        <div className="space-y-2 md:col-span-2">
-                          <Label htmlFor={`event-instructions-${index}`}>Instructions</Label>
-                          <Textarea
-                            id={`event-instructions-${index}`}
-                            value={event.instructions || ""}
-                            onChange={(e) => handleEventChange(index, "instructions", e.target.value)}
-                            rows={2}
-                            placeholder="Please bring your college ID and registration confirmation"
-                          />
-                        </div>
-                        
-                        {/* Additional Fields for Resources */}
-                        <div className="space-y-2 md:col-span-2">
-                          <Label htmlFor={`event-resources-${index}`}>Resources</Label>
-                          <Textarea
-                            id={`event-resources-${index}`}
-                            value={event.resources || ""}
-                            onChange={(e) => handleEventChange(index, "resources", e.target.value)}
-                            rows={2}
-                            placeholder="Recommended reading: Latest trends in AI and Cybersecurity"
-                          />
-                        </div>
-                        
-                        {/* Additional Field for WhatsApp Group */}
-                        <div className="space-y-2 md:col-span-2">
-                          <Label htmlFor={`event-whatsapp-${index}`}>WhatsApp Group Link</Label>
-                          <Input
-                            id={`event-whatsapp-${index}`}
-                            value={event.whatsappGroup || ""}
-                            onChange={(e) => handleEventChange(index, "whatsappGroup", e.target.value)}
-                            placeholder="https://chat.whatsapp.com/..."
-                          />
-                        </div>
-                        
-                        {/* Speaker field for seminar events */}
-                        {event.category === "seminar" && (
-                          <div className="space-y-2 md:col-span-2">
-                            <Label htmlFor={`event-speaker-${index}`}>Speaker</Label>
-                            <Input
-                              id={`event-speaker-${index}`}
-                              value={event.speaker || ""}
-                              onChange={(e) => handleEventChange(index, "speaker", e.target.value)}
-                              placeholder="Dr. John Doe, University of Example"
-                            />
-                          </div>
-                        )}
                       </div>
+                      
+                      {/* Additional Fields for Coordinators */}
+                      <div className="space-y-2 md:col-span-2">
+                        <Label>Coordinators</Label>
+                        <div className="space-y-4 border rounded-md p-4">
+                          {event.coordinators && event.coordinators.map((coordinator, coordIndex) => (
+                            <div key={coordIndex} className="grid grid-cols-1 md:grid-cols-3 gap-4 pb-4 border-b border-gray-200 last:border-0">
+                              <div className="space-y-2">
+                                <Label htmlFor={`event-coord-name-${index}-${coordIndex}`}>Name</Label>
+                                <Input
+                                  id={`event-coord-name-${index}-${coordIndex}`}
+                                  value={coordinator.name}
+                                  onChange={(e) => {
+                                    const updatedCoordinators = [...event.coordinators];
+                                    updatedCoordinators[coordIndex] = {
+                                      ...updatedCoordinators[coordIndex],
+                                      name: e.target.value
+                                    };
+                                    handleEventChange(index, "coordinators", updatedCoordinators);
+                                  }}
+                                  placeholder="John Doe"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor={`event-coord-email-${index}-${coordIndex}`}>Email</Label>
+                                <Input
+                                  id={`event-coord-email-${index}-${coordIndex}`}
+                                  value={coordinator.email}
+                                  onChange={(e) => {
+                                    const updatedCoordinators = [...event.coordinators];
+                                    updatedCoordinators[coordIndex] = {
+                                      ...updatedCoordinators[coordIndex],
+                                      email: e.target.value
+                                    };
+                                    handleEventChange(index, "coordinators", updatedCoordinators);
+                                  }}
+                                  placeholder="john.doe@example.com"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor={`event-coord-phone-${index}-${coordIndex}`}>Phone</Label>
+                                <Input
+                                  id={`event-coord-phone-${index}-${coordIndex}`}
+                                  value={coordinator.phone}
+                                  onChange={(e) => {
+                                    const updatedCoordinators = [...event.coordinators];
+                                    updatedCoordinators[coordIndex] = {
+                                      ...updatedCoordinators[coordIndex],
+                                      phone: e.target.value
+                                    };
+                                    handleEventChange(index, "coordinators", updatedCoordinators);
+                                  }}
+                                  placeholder="9876543210"
+                                />
+                              </div>
+                              <div className="md:col-span-3">
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm"
+                                  onClick={() => {
+                                    const updatedCoordinators = event.coordinators.filter((_, i) => i !== coordIndex);
+                                    handleEventChange(index, "coordinators", updatedCoordinators);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  Remove Coordinator
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              const updatedCoordinators = [...(event.coordinators || []), { name: "", email: "", phone: "" }];
+                              handleEventChange(index, "coordinators", updatedCoordinators);
+                            }}
+                          >
+                            <PlusCircle className="h-4 w-4 mr-1" />
+                            Add Coordinator
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {/* Additional Fields for Rules */}
+                      <div className="space-y-2 md:col-span-2">
+                        <Label>Rules</Label>
+                        <div className="space-y-4 border rounded-md p-4">
+                          {event.rules && event.rules.map((rule, ruleIndex) => (
+                            <div key={ruleIndex} className="flex items-center gap-2 pb-2">
+                              <Input
+                                value={rule}
+                                onChange={(e) => {
+                                  const updatedRules = [...event.rules];
+                                  updatedRules[ruleIndex] = e.target.value;
+                                  handleEventChange(index, "rules", updatedRules);
+                                }}
+                                placeholder="Rule description"
+                              />
+                              <Button 
+                                variant="destructive" 
+                                size="icon"
+                                onClick={() => {
+                                  const updatedRules = event.rules.filter((_, i) => i !== ruleIndex);
+                                  handleEventChange(index, "rules", updatedRules);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              const updatedRules = [...(event.rules || []), ""];
+                              handleEventChange(index, "rules", updatedRules);
+                            }}
+                          >
+                            <PlusCircle className="h-4 w-4 mr-1" />
+                            Add Rule
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {/* Additional Fields for Instructions */}
+                      <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor={`event-instructions-${index}`}>Instructions</Label>
+                        <Textarea
+                          id={`event-instructions-${index}`}
+                          value={event.instructions || ""}
+                          onChange={(e) => handleEventChange(index, "instructions", e.target.value)}
+                          rows={2}
+                          placeholder="Please bring your college ID and registration confirmation"
+                        />
+                      </div>
+                      
+                      {/* Additional Fields for Resources */}
+                      <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor={`event-resources-${index}`}>Resources</Label>
+                        <Textarea
+                          id={`event-resources-${index}`}
+                          value={event.resources || ""}
+                          onChange={(e) => handleEventChange(index, "resources", e.target.value)}
+                          rows={2}
+                          placeholder="Recommended reading: Latest trends in AI and Cybersecurity"
+                        />
+                      </div>
+                      
+                      {/* Additional Field for WhatsApp Group */}
+                      <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor={`event-whatsapp-${index}`}>WhatsApp Group Link</Label>
+                        <Input
+                          id={`event-whatsapp-${index}`}
+                          value={event.whatsappGroup || ""}
+                          onChange={(e) => handleEventChange(index, "whatsappGroup", e.target.value)}
+                          placeholder="https://chat.whatsapp.com/..."
+                        />
+                      </div>
+                      
+                      {/* Speaker field for seminar events */}
+                      {event.category === "seminar" && (
+                        <div className="space-y-2 md:col-span-2">
+                          <Label htmlFor={`event-speaker-${index}`}>Speaker</Label>
+                          <Input
+                            id={`event-speaker-${index}`}
+                            value={event.speaker || ""}
+                            onChange={(e) => handleEventChange(index, "speaker", e.target.value)}
+                            placeholder="Dr. John Doe, University of Example"
+                          />
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </ScrollArea>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -998,6 +994,9 @@ export default function TechelonsManagement() {
                     value={newEvent.image}
                     onChange={(url) => handleNewEventChange("image", url)}
                     onRemove={resetNewEventImage}
+                    previewWidth={300}
+                    aspectRatio="16:9"
+                    description="Upload an event image (16:9 aspect ratio recommended)"
                   />
                 </div>
                 
