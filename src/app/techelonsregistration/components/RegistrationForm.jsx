@@ -198,7 +198,12 @@ export default function RegistrationForm({
           result
         });
         
-        if (errorMessage.includes("already registered")) {
+        // Check for specific error messages
+        if (errorMessage.includes("email address")) {
+          errorMessage = ERROR_MESSAGES.DUPLICATE_EMAIL;
+        } else if (errorMessage.includes("phone number")) {
+          errorMessage = ERROR_MESSAGES.DUPLICATE_PHONE;
+        } else if (errorMessage.includes("already registered")) {
           errorMessage = ERROR_MESSAGES.DUPLICATE_EMAIL;
         }
         

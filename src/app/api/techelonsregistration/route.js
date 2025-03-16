@@ -175,19 +175,35 @@ export async function POST(request) {
       }
     }
     
-    // Check if user is already registered for this event
-    const existingRegistration = await TechelonsRegistration.findOne({
+    // Check if user is already registered for this event by email
+    const existingRegistrationByEmail = await TechelonsRegistration.findOne({
       eventId: registrationData.eventId,
       'mainParticipant.email': registrationData.mainParticipant.email.toLowerCase()
     });
     
-    if (existingRegistration) {
-      const registrationToken = generateRegistrationToken(existingRegistration);
-      console.log('User already registered, returning token:', registrationToken.substring(0, 20) + '...');
+    if (existingRegistrationByEmail) {
+      const registrationToken = generateRegistrationToken(existingRegistrationByEmail);
+      console.log('User already registered with this email, returning token:', registrationToken.substring(0, 20) + '...');
       return NextResponse.json({ 
         alreadyRegistered: true,
         registrationToken,
-        message: 'You are already registered for this event' 
+        message: 'You are already registered for this event with this email address' 
+      });
+    }
+    
+    // Check if user is already registered for this event by phone number
+    const existingRegistrationByPhone = await TechelonsRegistration.findOne({
+      eventId: registrationData.eventId,
+      'mainParticipant.phone': registrationData.mainParticipant.phone
+    });
+    
+    if (existingRegistrationByPhone) {
+      const registrationToken = generateRegistrationToken(existingRegistrationByPhone);
+      console.log('User already registered with this phone number, returning token:', registrationToken.substring(0, 20) + '...');
+      return NextResponse.json({ 
+        alreadyRegistered: true,
+        registrationToken,
+        message: 'You are already registered for this event with this phone number' 
       });
     }
     

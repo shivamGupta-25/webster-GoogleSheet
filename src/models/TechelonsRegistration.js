@@ -103,5 +103,14 @@ TechelonsRegistrationSchema.index(
   { unique: true }
 );
 
+// Create another compound index to prevent duplicate registrations with the same phone number
+TechelonsRegistrationSchema.index(
+  { 
+    eventId: 1, 
+    'mainParticipant.phone': 1 
+  }, 
+  { unique: true }
+);
+
 // Create model if it doesn't exist already
 export default mongoose.models.TechelonsRegistration || mongoose.model('TechelonsRegistration', TechelonsRegistrationSchema); 
