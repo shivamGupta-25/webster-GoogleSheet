@@ -34,7 +34,11 @@ export default function AdminLogin() {
       }
 
       toast.success("Login successful!");
-      router.push("/admin");
+      router.replace("/admin");
+      
+      setTimeout(() => {
+        window.location.href = "/admin";
+      }, 1000);
     } catch (error) {
       toast.error("Invalid username or password");
     } finally {

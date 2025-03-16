@@ -21,6 +21,7 @@ export function middleware(request) {
 
         // If no session token is present, redirect to login
         if (!sessionToken) {
+            console.log('No admin_session cookie found, redirecting to login');
             return NextResponse.redirect(new URL('/admin/login', request.url));
         }
 
@@ -31,14 +32,17 @@ export function middleware(request) {
             
             // Check if the token is expired (2 hours)
             if (Date.now() - parseInt(timestamp) > 2 * 60 * 60 * 1000) {
+                console.log('Admin session expired, redirecting to login');
                 return NextResponse.redirect(new URL('/admin/login', request.url));
             }
 
             // Check if the username matches
             if (username !== ADMIN_USERNAME) {
+                console.log('Invalid username in admin session, redirecting to login');
                 return NextResponse.redirect(new URL('/admin/login', request.url));
             }
 
+            // Session is valid, allow access
             return NextResponse.next();
         } catch (error) {
             console.error('Session validation error:', error);
