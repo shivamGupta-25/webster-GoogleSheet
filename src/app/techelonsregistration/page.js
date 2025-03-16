@@ -38,6 +38,23 @@ export default function TechelonsRegistrationPage() {
     loadContent();
   }, []);
 
+  // Handle eventId from URL query parameter
+  useEffect(() => {
+    if (!isLoading && techelonsData?.events && !selectedEvent) {
+      // Get eventId from URL query parameter
+      const params = new URLSearchParams(window.location.search);
+      const eventId = params.get('eventId');
+      
+      if (eventId) {
+        // Find the event with the matching ID
+        const event = techelonsData.events.find(e => e.id === eventId);
+        if (event) {
+          setSelectedEvent(event);
+        }
+      }
+    }
+  }, [isLoading, techelonsData, selectedEvent]);
+
   // Redirect if registration is closed
   useEffect(() => {
     if (!isLoading && techelonsData && !techelonsData.festInfo?.registrationEnabled) {
@@ -71,6 +88,11 @@ export default function TechelonsRegistrationPage() {
   const handleBackToEvents = () => {
     setSelectedEvent(null);
     setServerError(null);
+    
+    // Clear the URL parameter
+    const url = new URL(window.location.href);
+    url.searchParams.delete('eventId');
+    window.history.replaceState({}, '', url);
   };
 
   return (
