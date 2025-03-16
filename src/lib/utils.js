@@ -129,6 +129,13 @@ export async function fetchTechelonsData() {
         
         // Handle abort error specifically
         if (error.name === 'AbortError') {
+          console.warn('Request timed out after 5 seconds. Attempting to use cached data.');
+          // If we have cached data, return it even if it's expired
+          if (techelonsDataCache) {
+            console.warn('Returning cached Techelons data due to timeout');
+            return techelonsDataCache;
+          }
+          // Only throw if we have no cached data
           throw new Error('Request timed out after 5 seconds. Please check your network connection and try again.');
         }
         

@@ -550,15 +550,26 @@ const EventSchedule = () => {
     const [contentLoaded, setContentLoaded] = useState(false)
     const eventsRef = useRef(null)
     const [techelonsData, setTechelonsData] = useState(null)
+    const [dataError, setDataError] = useState(null)
 
     // Fetch Techelons data
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const data = await fetchTechelonsData();
-                setTechelonsData(data);
+                if (data) {
+                    setTechelonsData(data);
+                    setDataError(null);
+                } else {
+                    setDataError("Unable to load event data. Please try refreshing the page.");
+                }
             } catch (error) {
                 console.error("Error fetching Techelons data:", error);
+                setDataError(error.message || "Failed to load event data. Please try again later.");
+            } finally {
+                // Ensure loading state is updated even if there's an error
+                setIsLoading(false);
+                setContentLoaded(true);
             }
         };
         
@@ -690,6 +701,24 @@ const EventSchedule = () => {
             />
         )
     ), [contentLoaded, allCategories, activeFilter, setActiveFilter, searchTerm, setSearchTerm]);
+
+    // Add error display section
+    if (dataError && !isLoading) {
+        return (
+            <div className="w-full flex flex-col items-center justify-center py-12 px-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-2xl w-full text-center">
+                    <h3 className="text-lg font-semibold text-red-800 mb-2">Unable to Load Events</h3>
+                    <p className="text-red-700 mb-4">{dataError}</p>
+                    <button 
+                        onClick={() => window.location.reload()}
+                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                    >
+                        Refresh Page
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <ErrorBoundary FallbackComponent={ErrorFallback}>
