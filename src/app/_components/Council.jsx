@@ -121,7 +121,7 @@ const SWIPER_CONFIG = {
         pauseOnMouseEnter: true
     },
     breakpoints: {
-        320: { slidesPerView: 1.1, spaceBetween: 8 },
+        320: { slidesPerView: 1, spaceBetween: 26 },
         480: { slidesPerView: 1.5, spaceBetween: 12 },
         640: { slidesPerView: 2, spaceBetween: 16 },
         768: { slidesPerView: 2.5, spaceBetween: 20 },
@@ -131,24 +131,26 @@ const SWIPER_CONFIG = {
 };
 
 // Skeleton loader component
-const CouncilSkeleton = memo(() => (
-    <section className="w-full">
-        <div className="w-full px-0">
-            <div className="flex flex-col items-center justify-center space-y-2 sm:space-y-4 text-center mb-6 sm:mb-8 md:mb-12 px-3 sm:px-4 md:px-6">
-                <Skeleton className="h-12 sm:h-16 md:h-20 lg:h-24 w-64 sm:w-80 md:w-96 mx-auto" />
-                <Skeleton className="h-4 sm:h-5 md:h-6 w-full max-w-[600px] md:max-w-[700px] mx-auto" />
-            </div>
-            
-            <div className="w-full overflow-x-hidden">
-                <div className="flex space-x-4 px-4" style={{
-                    width: '100vw',
-                    marginLeft: '50%',
-                    transform: 'translateX(-50%)',
-                    paddingTop: '10px',
-                    paddingBottom: '20px'
-                }}>
-                    {[...Array(5)].map((_, index) => (
-                        <div key={index} className="flex-shrink-0" style={{ width: 'calc(100% / 3)' }}>
+const CouncilSkeleton = memo(() => {
+    // Use a simpler approach without window resize listeners
+    return (
+        <section className="w-full">
+            <div className="w-full px-0">
+                <div className="flex flex-col items-center justify-center space-y-2 sm:space-y-4 text-center mb-6 sm:mb-8 md:mb-12 px-3 sm:px-4 md:px-6">
+                    <Skeleton className="h-12 sm:h-16 md:h-20 lg:h-24 w-64 sm:w-80 md:w-96 mx-auto" />
+                    <Skeleton className="h-4 sm:h-5 md:h-6 w-full max-w-[600px] md:max-w-[700px] mx-auto" />
+                </div>
+
+                <div className="w-full overflow-x-hidden">
+                    <div className="flex space-x-4 px-4" style={{
+                        width: '100vw',
+                        marginLeft: '50%',
+                        transform: 'translateX(-50%)',
+                        paddingTop: '10px',
+                        paddingBottom: '20px'
+                    }}>
+                        {/* Use CSS media queries instead of JS calculations */}
+                        <div className="hidden xs:block flex-shrink-0 w-full xs:w-2/3 sm:w-1/2 md:w-2/5 lg:w-1/3 xl:w-1/4">
                             <div className="px-1 py-2 h-full">
                                 <Card className="overflow-hidden bg-white shadow-md p-0 h-full flex flex-col">
                                     <div className="relative w-full" style={{ paddingTop: '133.33%' }}>
@@ -166,12 +168,49 @@ const CouncilSkeleton = memo(() => (
                                 </Card>
                             </div>
                         </div>
-                    ))}
+                        {/* Repeat for a few visible cards */}
+                        <div className="flex-shrink-0 w-full xs:w-2/3 sm:w-1/2 md:w-2/5 lg:w-1/3 xl:w-1/4">
+                            <div className="px-1 py-2 h-full">
+                                <Card className="overflow-hidden bg-white shadow-md p-0 h-full flex flex-col">
+                                    <div className="relative w-full" style={{ paddingTop: '133.33%' }}>
+                                        <Skeleton className="absolute inset-0 w-full h-full" />
+                                    </div>
+                                    <CardContent className="p-4 text-center flex-grow flex flex-col justify-between">
+                                        <div>
+                                            <Skeleton className="h-5 w-3/4 mx-auto mb-2" />
+                                            <Skeleton className="h-4 w-1/2 mx-auto mb-2" />
+                                        </div>
+                                        <div className="mt-2 flex justify-center">
+                                            <Skeleton className="h-5 w-5 rounded-full" />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        </div>
+                        <div className="hidden sm:block flex-shrink-0 w-full xs:w-2/3 sm:w-1/2 md:w-2/5 lg:w-1/3 xl:w-1/4">
+                            <div className="px-1 py-2 h-full">
+                                <Card className="overflow-hidden bg-white shadow-md p-0 h-full flex flex-col">
+                                    <div className="relative w-full" style={{ paddingTop: '133.33%' }}>
+                                        <Skeleton className="absolute inset-0 w-full h-full" />
+                                    </div>
+                                    <CardContent className="p-4 text-center flex-grow flex flex-col justify-between">
+                                        <div>
+                                            <Skeleton className="h-5 w-3/4 mx-auto mb-2" />
+                                            <Skeleton className="h-4 w-1/2 mx-auto mb-2" />
+                                        </div>
+                                        <div className="mt-2 flex justify-center">
+                                            <Skeleton className="h-5 w-5 rounded-full" />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
-));
+        </section>
+    );
+});
 
 CouncilSkeleton.displayName = 'CouncilSkeleton';
 
@@ -185,46 +224,65 @@ const Council = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        // Set mounted state immediately
         setIsMounted(true);
 
-        const loadContent = async () => {
-            try {
-                const content = await fetchSiteContent();
-                if (content && content.council) {
-                    setCouncilData(content.council);
-                }
-            } catch (error) {
-                console.error('Error loading council data:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+        // Use a timeout to defer non-critical data fetching
+        const timer = setTimeout(() => {
+            fetchSiteContent()
+                .then(content => {
+                    if (content && content.council) {
+                        setCouncilData(content.council);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading council data:', error);
+                })
+                .finally(() => {
+                    setIsLoading(false);
+                });
+        }, 100); // Small delay to prioritize initial render
 
-        loadContent();
+        return () => clearTimeout(timer);
     }, []);
 
     const { title, description, members } = councilData;
 
-    const renderSlides = useMemo(() =>
-        members && members.map((member, index) => (
+    // Optimize slide rendering with better memoization
+    const renderSlides = useMemo(() => {
+        if (!members || members.length === 0) return null;
+
+        return members.map((member, index) => (
             <SwiperSlide key={member.name} className="h-auto" style={{ width: 'auto' }}>
                 <div className="px-1 py-2 h-full">
                     <MemberCard member={member} index={index} />
                 </div>
             </SwiperSlide>
-        )),
-        [members]);
+        ));
+    }, [members]);
 
     if (isLoading) {
         return <CouncilSkeleton />;
     }
+
+    // Optimize Swiper config to reduce initial load time
+    const optimizedSwiperConfig = {
+        ...SWIPER_CONFIG,
+        // Remove DOM props that cause React warnings
+        lazy: {
+            loadPrevNext: true,
+            loadPrevNextAmount: 1
+        },
+        observer: true,
+        observeParents: true
+    };
 
     return (
         <section id="council" className="w-full">
             <div className="w-full px-0">
                 <div className="flex flex-col items-center justify-center space-y-2 sm:space-y-4 text-center mb-6 sm:mb-8 md:mb-12 px-3 sm:px-4 md:px-6">
                     <motion.h2
-                        className="text-6xl sm:text-6xl md:text-6xl lg:text-8xl font-bold tracking-tighter"
+                        className="text-4xl sm:text-6xl md:text-6xl lg:text-8xl font-bold tracking-tighter"
                         variants={animations.title}
                         initial="hidden"
                         whileInView="visible"
@@ -246,11 +304,13 @@ const Council = () => {
                 {isMounted && (
                     <div className="w-full overflow-x-hidden">
                         <Swiper
-                            {...SWIPER_CONFIG}
+                            {...optimizedSwiperConfig}
                             className="w-full"
                             style={{
                                 paddingTop: '10px',
                                 paddingBottom: '20px',
+                                paddingLeft: '10px',
+                                paddingRight: '10px',
                                 width: '100vw',
                                 marginLeft: '50%',
                                 transform: 'translateX(-50%)'

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState, memo, useCallback } from "react";
 import Image from "next/image";
 import { FaInstagram, FaLinkedinIn, FaTwitter, FaFacebookF, FaYoutube } from "react-icons/fa";
 import { motion } from "framer-motion";
@@ -66,6 +66,35 @@ const Footer = () => {
         socialLinks: defaultSocialLinks,
         logoImage: "/assets/Footer_logo.png"
     });
+    const [developerInfo, setDeveloperInfo] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Optimized data fetching with useCallback
+    const fetchDeveloperInfo = useCallback(async () => {
+        try {
+            const controller = new AbortController();
+            const signal = controller.signal;
+            
+            const response = await fetch("https://credit-api.vercel.app/api/credits", {
+                method: "GET",
+                headers: { "Content-Type": "application/json" },
+                signal
+            });
+            
+            if (!response.ok) throw new Error("Failed to fetch developer info");
+            const data = await response.json();
+            setDeveloperInfo(data);
+            
+            return controller;
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                setError(error.message);
+            }
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     // Fetch footer data
     useEffect(() => {
@@ -89,6 +118,18 @@ const Footer = () => {
         
         fetchFooterData();
     }, []);
+
+    // Fetch developer info
+    useEffect(() => {
+        const controller = fetchDeveloperInfo();
+        
+        // Clean up function to abort fetch on unmount
+        return () => {
+            if (controller && controller.abort) {
+                controller.abort();
+            }
+        };
+    }, [fetchDeveloperInfo]);
 
     const currentYear = new Date().getFullYear();
 
@@ -133,6 +174,17 @@ const Footer = () => {
 
             <motion.div variants={animations.fadeInUp} className="text-center text-sm mt-8 border-t border-gray-700 pt-4 text-gray-500">
                 <p className="text-lg">&copy; {currentYear} Websters. All rights reserved.</p>
+                {loading ? (
+                    <p className="mt-4 text-gray-400 text-lg">Loading developer info...</p>
+                ) : error ? (
+                    <p className="mt-4 text-red-400 text-lg">{error}</p>
+                ) : (
+                    developerInfo && (
+                        <p className="mt-4 text-gray-400 text-lg">
+                            Designed & Developed by: <a href={developerInfo.linkedin} className="text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer">{developerInfo.credit}</a>
+                        </p>
+                    )
+                )}
             </motion.div>
         </motion.footer>
     );

@@ -8,12 +8,14 @@ export function cn(...inputs) {
 // Cache for site content
 let siteContentCache = null;
 let techelonsDataCache = null;
+let siteContentCacheTimestamp = null;
 let techelonsDataCacheTimestamp = null;
-const CACHE_DURATION = 30 * 1000; // Reduced to 30 seconds in milliseconds
+const CACHE_DURATION = 5 * 60 * 1000; // Increased to 5 minutes in milliseconds
 
-// Function to fetch site content
+// Function to fetch site content with improved caching
 export async function fetchSiteContent() {
-  if (siteContentCache && (Date.now() - techelonsDataCacheTimestamp < CACHE_DURATION)) {
+  // Check if cache is valid
+  if (siteContentCache && siteContentCacheTimestamp && (Date.now() - siteContentCacheTimestamp < CACHE_DURATION)) {
     return siteContentCache;
   }
   
@@ -37,7 +39,7 @@ export async function fetchSiteContent() {
         }
         
         siteContentCache = content;
-        techelonsDataCacheTimestamp = Date.now();
+        siteContentCacheTimestamp = Date.now();
         return content;
       } catch (dbError) {
         console.error('Error connecting to database during build:', dbError);
@@ -46,20 +48,58 @@ export async function fetchSiteContent() {
       }
     } else {
       // In browser environment, use relative URL with cache-busting parameter
-      const cacheBuster = Date.now();
-      const response = await fetch(`/api/content?_=${cacheBuster}`);
+      // Use AbortController to properly cancel the fetch request on timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch site content');
+      try {
+        const cacheBuster = Date.now();
+        const response = await fetch(`/api/content?_=${cacheBuster}`, {
+          signal: controller.signal,
+          // Add cache control headers
+          headers: {
+            'Cache-Control': 'max-age=300' // 5 minutes
+          }
+        });
+        
+        // Clear the timeout since fetch completed
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch site content');
+        }
+        
+        const data = await response.json();
+        siteContentCache = data;
+        siteContentCacheTimestamp = Date.now();
+        return data;
+      } catch (error) {
+        // Clear the timeout if there was an error
+        clearTimeout(timeoutId);
+        
+        // Handle abort error specifically
+        if (error.name === 'AbortError') {
+          console.warn('Request timed out after 5 seconds. Attempting to use cached data.');
+          // If we have cached data, return it even if it's expired
+          if (siteContentCache) {
+            console.warn('Returning cached site content data due to timeout');
+            return siteContentCache;
+          }
+        }
+        
+        // Re-throw other errors to be caught by the outer try-catch
+        throw error;
       }
-      
-      const data = await response.json();
-      siteContentCache = data;
-      techelonsDataCacheTimestamp = Date.now();
-      return data;
     }
   } catch (error) {
     console.error('Error fetching site content:', error);
+    
+    // If we have cached data, return it even if it's expired
+    if (siteContentCache) {
+      console.warn('Returning expired cached site content due to fetch error');
+      return siteContentCache;
+    }
+    
     return null;
   }
 }
@@ -106,7 +146,11 @@ export async function fetchTechelonsData() {
         // Create the fetch promise with abort signal and cache-busting parameter
         const cacheBuster = Date.now();
         const response = await fetch(`/api/techelons?_=${cacheBuster}`, {
-          signal: controller.signal
+          signal: controller.signal,
+          // Add cache control headers
+          headers: {
+            'Cache-Control': 'max-age=300' // 5 minutes
+          }
         });
         
         // Clear the timeout since fetch completed

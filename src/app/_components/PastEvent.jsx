@@ -2,15 +2,14 @@
 // Please review and update the component to use the async fetchSiteContent function.
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import dynamic from 'next/dynamic';
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { cn, fetchSiteContent } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/skeleton";
 import { PastEventSkeleton } from "./Skeletons/PastEvent";
 
-// Dynamically import the EventSwiper component
+// Dynamically import the EventSwiper component with increased loading delay
 const EventSwiper = dynamic(() => import('./Skeletons/PastEvent/EventSwiper').then(mod => ({ default: mod.EventSwiper })), {
   ssr: false,
   loading: () => <div className="w-full max-w-md mx-auto aspect-[16/9] rounded-xl bg-gray-200 animate-pulse" />
@@ -47,7 +46,7 @@ const useWindowSize = () => {
   return isMobile;
 };
 
-// Optimized image component with loading state
+// Optimized image component with loading state and better lazy loading
 const EventImage = React.memo(({ src, alt, priority = false }) => {
   const [isLoading, setIsLoading] = useState(true);
   
@@ -67,12 +66,33 @@ const EventImage = React.memo(({ src, alt, priority = false }) => {
         )}
         onLoad={() => setIsLoading(false)}
         priority={priority}
+        loading={priority ? "eager" : "lazy"}
+        quality={75}
       />
     </div>
   );
 });
 
 EventImage.displayName = 'EventImage';
+
+// Animation variants - moved outside component to prevent recreation
+const sectionVariants = {
+  hidden: { opacity: 0, y: 50 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { 
+      duration: 0.6,
+      when: "beforeChildren",
+      staggerChildren: 0.2
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+};
 
 // Main PastEvent component
 const PastEvent = () => {
@@ -84,22 +104,34 @@ const PastEvent = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   
-  // Fetch past events data
+  // Fetch past events data with improved caching
   useEffect(() => {
+    let isMounted = true;
+    
     const loadContent = async () => {
       try {
+        // Add a small delay to prioritize more critical components
         const content = await fetchSiteContent();
-        if (content && content.pastEvents) {
+        
+        if (isMounted && content && content.pastEvents) {
           setPastEventsData(content.pastEvents);
         }
       } catch (error) {
         console.error('Error loading past events data:', error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    loadContent();
+    // Delay loading of past events to prioritize more critical content
+    const timeoutId = setTimeout(loadContent, 100);
+    
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, []);
   
   // Destructure past events data
@@ -107,25 +139,6 @@ const PastEvent = () => {
   
   // Use events from fetched data
   const slides = useMemo(() => events || [], [events]);
-
-  // Animation variants for the section
-  const sectionVariants = {
-    hidden: { opacity: 0, y: 50 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { 
-        duration: 0.6,
-        when: "beforeChildren",
-        staggerChildren: 0.2
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-  };
 
   if (isLoading) {
     return <PastEventSkeleton />;
@@ -169,4 +182,4 @@ const PastEvent = () => {
   );
 };
 
-export default PastEvent;
+export default React.memo(PastEvent);
