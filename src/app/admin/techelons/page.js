@@ -46,7 +46,9 @@ export default function TechelonsManagement() {
     rules: [""],
     instructions: "",
     resources: "",
-    whatsappGroup: ""
+    whatsappGroup: "",
+    competitionStructure: [""],
+    evaluationCriteria: [""]
   });
 
   // Load Techelons data on component mount
@@ -224,7 +226,9 @@ export default function TechelonsManagement() {
       rules: [""],
       instructions: "",
       resources: "",
-      whatsappGroup: ""
+      whatsappGroup: "",
+      competitionStructure: [""],
+      evaluationCriteria: [""]
     });
 
     toast.success("Event added successfully");
@@ -736,7 +740,7 @@ export default function TechelonsManagement() {
                         <Label>Rules</Label>
                         <div className="space-y-4 border rounded-md p-4">
                           {event.rules && event.rules.map((rule, ruleIndex) => (
-                            <div key={ruleIndex} className="flex items-center gap-2 pb-2">
+                            <div key={ruleIndex} className="flex items-center gap-2">
                               <Input
                                 value={rule}
                                 onChange={(e) => {
@@ -744,10 +748,10 @@ export default function TechelonsManagement() {
                                   updatedRules[ruleIndex] = e.target.value;
                                   handleEventChange(index, "rules", updatedRules);
                                 }}
-                                placeholder="Rule description"
+                                placeholder={`Rule ${ruleIndex + 1}`}
                               />
                               <Button 
-                                variant="destructive" 
+                                variant="ghost" 
                                 size="icon"
                                 onClick={() => {
                                   const updatedRules = event.rules.filter((_, i) => i !== ruleIndex);
@@ -772,7 +776,88 @@ export default function TechelonsManagement() {
                         </div>
                       </div>
                       
-                      {/* Additional Fields for Instructions */}
+                      {/* Competition Structure */}
+                      <div className="space-y-2 md:col-span-2">
+                        <Label>Competition Structure</Label>
+                        <div className="space-y-4 border rounded-md p-4">
+                          {event.competitionStructure && event.competitionStructure.map((item, structureIndex) => (
+                            <div key={structureIndex} className="flex items-center gap-2">
+                              <Input
+                                value={item}
+                                onChange={(e) => {
+                                  const updatedStructure = [...(event.competitionStructure || [])];
+                                  updatedStructure[structureIndex] = e.target.value;
+                                  handleEventChange(index, "competitionStructure", updatedStructure);
+                                }}
+                                placeholder={`Round ${structureIndex + 1} or Phase ${structureIndex + 1}`}
+                              />
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => {
+                                  const updatedStructure = event.competitionStructure.filter((_, i) => i !== structureIndex);
+                                  handleEventChange(index, "competitionStructure", updatedStructure);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              const updatedStructure = [...(event.competitionStructure || []), ""];
+                              handleEventChange(index, "competitionStructure", updatedStructure);
+                            }}
+                          >
+                            <PlusCircle className="h-4 w-4 mr-1" />
+                            Add Round/Phase
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      {/* Evaluation Criteria */}
+                      <div className="space-y-2 md:col-span-2">
+                        <Label>Evaluation Criteria</Label>
+                        <div className="space-y-4 border rounded-md p-4">
+                          {event.evaluationCriteria && event.evaluationCriteria.map((criterion, criterionIndex) => (
+                            <div key={criterionIndex} className="flex items-center gap-2">
+                              <Input
+                                value={criterion}
+                                onChange={(e) => {
+                                  const updatedCriteria = [...(event.evaluationCriteria || [])];
+                                  updatedCriteria[criterionIndex] = e.target.value;
+                                  handleEventChange(index, "evaluationCriteria", updatedCriteria);
+                                }}
+                                placeholder={`Criterion ${criterionIndex + 1} (e.g., "Code efficiency - 25 points")`}
+                              />
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => {
+                                  const updatedCriteria = event.evaluationCriteria.filter((_, i) => i !== criterionIndex);
+                                  handleEventChange(index, "evaluationCriteria", updatedCriteria);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              const updatedCriteria = [...(event.evaluationCriteria || []), ""];
+                              handleEventChange(index, "evaluationCriteria", updatedCriteria);
+                            }}
+                          >
+                            <PlusCircle className="h-4 w-4 mr-1" />
+                            Add Criterion
+                          </Button>
+                        </div>
+                      </div>
+                      
                       <div className="space-y-2 md:col-span-2">
                         <Label htmlFor={`event-instructions-${index}`}>Instructions</Label>
                         <Textarea
@@ -784,7 +869,6 @@ export default function TechelonsManagement() {
                         />
                       </div>
                       
-                      {/* Additional Fields for Resources */}
                       <div className="space-y-2 md:col-span-2">
                         <Label htmlFor={`event-resources-${index}`}>Resources</Label>
                         <Textarea
@@ -796,7 +880,6 @@ export default function TechelonsManagement() {
                         />
                       </div>
                       
-                      {/* Additional Field for WhatsApp Group */}
                       <div className="space-y-2 md:col-span-2">
                         <Label htmlFor={`event-whatsapp-${index}`}>WhatsApp Group Link</Label>
                         <Input
@@ -1177,7 +1260,7 @@ export default function TechelonsManagement() {
                   <Label>Rules</Label>
                   <div className="space-y-4 border rounded-md p-4">
                     {newEvent.rules && newEvent.rules.map((rule, ruleIndex) => (
-                      <div key={ruleIndex} className="flex items-center gap-2 pb-2">
+                      <div key={ruleIndex} className="flex items-center gap-2">
                         <Input
                           value={rule}
                           onChange={(e) => {
@@ -1185,10 +1268,10 @@ export default function TechelonsManagement() {
                             updatedRules[ruleIndex] = e.target.value;
                             handleNewEventChange("rules", updatedRules);
                           }}
-                          placeholder="Rule description"
+                          placeholder={`Rule ${ruleIndex + 1}`}
                         />
                         <Button 
-                          variant="destructive" 
+                          variant="ghost" 
                           size="icon"
                           onClick={() => {
                             const updatedRules = newEvent.rules.filter((_, i) => i !== ruleIndex);
@@ -1209,6 +1292,88 @@ export default function TechelonsManagement() {
                     >
                       <PlusCircle className="h-4 w-4 mr-1" />
                       Add Rule
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Competition Structure */}
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Competition Structure</Label>
+                  <div className="space-y-4 border rounded-md p-4">
+                    {newEvent.competitionStructure && newEvent.competitionStructure.map((item, structureIndex) => (
+                      <div key={structureIndex} className="flex items-center gap-2">
+                        <Input
+                          value={item}
+                          onChange={(e) => {
+                            const updatedStructure = [...(newEvent.competitionStructure || [])];
+                            updatedStructure[structureIndex] = e.target.value;
+                            handleNewEventChange("competitionStructure", updatedStructure);
+                          }}
+                          placeholder={`Round ${structureIndex + 1} or Phase ${structureIndex + 1}`}
+                        />
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => {
+                            const updatedStructure = newEvent.competitionStructure.filter((_, i) => i !== structureIndex);
+                            handleNewEventChange("competitionStructure", updatedStructure);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        const updatedStructure = [...(newEvent.competitionStructure || []), ""];
+                        handleNewEventChange("competitionStructure", updatedStructure);
+                      }}
+                    >
+                      <PlusCircle className="h-4 w-4 mr-1" />
+                      Add Round/Phase
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Evaluation Criteria */}
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Evaluation Criteria</Label>
+                  <div className="space-y-4 border rounded-md p-4">
+                    {newEvent.evaluationCriteria && newEvent.evaluationCriteria.map((criterion, criterionIndex) => (
+                      <div key={criterionIndex} className="flex items-center gap-2">
+                        <Input
+                          value={criterion}
+                          onChange={(e) => {
+                            const updatedCriteria = [...(newEvent.evaluationCriteria || [])];
+                            updatedCriteria[criterionIndex] = e.target.value;
+                            handleNewEventChange("evaluationCriteria", updatedCriteria);
+                          }}
+                          placeholder={`Criterion ${criterionIndex + 1} (e.g., "Code efficiency - 25 points")`}
+                        />
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => {
+                            const updatedCriteria = newEvent.evaluationCriteria.filter((_, i) => i !== criterionIndex);
+                            handleNewEventChange("evaluationCriteria", updatedCriteria);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        const updatedCriteria = [...(newEvent.evaluationCriteria || []), ""];
+                        handleNewEventChange("evaluationCriteria", updatedCriteria);
+                      }}
+                    >
+                      <PlusCircle className="h-4 w-4 mr-1" />
+                      Add Criterion
                     </Button>
                   </div>
                 </div>

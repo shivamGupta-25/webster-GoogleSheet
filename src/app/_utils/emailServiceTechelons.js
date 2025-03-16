@@ -145,6 +145,20 @@ export async function sendTechelonsRegistrationEmail(registration, event, isTeam
           </ul>
         ` : ''}
         
+        ${event.competitionStructure && event.competitionStructure.length > 0 ? `
+          <h2>Competition Structure</h2>
+          <ol>
+            ${event.competitionStructure.map(item => `<li>${item}</li>`).join('')}
+          </ol>
+        ` : ''}
+        
+        ${event.evaluationCriteria && event.evaluationCriteria.length > 0 ? `
+          <h2>Evaluation Criteria</h2>
+          <ul>
+            ${event.evaluationCriteria.map(criterion => `<li>${criterion}</li>`).join('')}
+          </ul>
+        ` : ''}
+        
         ${event.whatsappGroup ? `
           <p>Join our WhatsApp group for updates and communication:</p>
           <a href="${event.whatsappGroup}" class="button whatsapp" target="_blank">Join WhatsApp Group</a>

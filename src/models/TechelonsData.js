@@ -49,7 +49,9 @@ const EventSchema = new mongoose.Schema({
   rules: [String],
   instructions: String,
   resources: String,
-  whatsappGroup: String
+  whatsappGroup: String,
+  competitionStructure: [String],
+  evaluationCriteria: [String]
 }, { _id: false });
 
 // Main TechelonsData schema

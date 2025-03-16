@@ -19,6 +19,8 @@ import {
   EventDetails,
   Description,
   Rules,
+  CompetitionStructure,
+  EvaluationCriteria,
   Instructions,
   TeamSize,
   Prizes,
@@ -162,6 +164,8 @@ const EventModal = memo(({ event, isOpen, onClose }) => {
                 {/* Content sections */}
                 <Description description={event.description} />
                 <Rules rules={event.rules} />
+                <CompetitionStructure competitionStructure={event.competitionStructure} />
+                <EvaluationCriteria evaluationCriteria={event.evaluationCriteria} />
                 <Instructions instructions={event.instructions} />
                 <TeamSize teamSize={event.teamSize} />
                 <Prizes prizes={event.prizes} />

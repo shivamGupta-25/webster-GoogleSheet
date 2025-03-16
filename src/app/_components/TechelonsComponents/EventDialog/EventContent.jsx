@@ -132,6 +132,52 @@ export const Rules = memo(({ rules }) => {
 });
 Rules.displayName = "Rules";
 
+// Competition Structure section
+export const CompetitionStructure = memo(({ competitionStructure }) => {
+  if (!competitionStructure?.length) return null;
+  
+  return (
+    <div>
+      <SectionHeading icon={<Trophy className={ICON_SIZE} />}>Competition Structure</SectionHeading>
+      <Card className="border-blue-200/80 dark:border-blue-800/80 shadow-sm hover:shadow-md transition-all duration-300 hover:translate-y-[-2px] bg-gradient-to-br from-blue-50/90 via-indigo-50/90 to-violet-50/90 dark:from-blue-950/40 dark:via-indigo-950/40 dark:to-violet-950/40">
+        <CardContent className="p-3 sm:p-4">
+          <ol className="list-decimal pl-5 space-y-1 text-sm sm:text-base">
+            {competitionStructure.map((item, index) => (
+              <li key={index} className="hover:text-foreground transition-colors duration-200">
+                {item}
+              </li>
+            ))}
+          </ol>
+        </CardContent>
+      </Card>
+    </div>
+  );
+});
+CompetitionStructure.displayName = "CompetitionStructure";
+
+// Evaluation Criteria section
+export const EvaluationCriteria = memo(({ evaluationCriteria }) => {
+  if (!evaluationCriteria?.length) return null;
+  
+  return (
+    <div>
+      <SectionHeading icon={<BookOpen className={ICON_SIZE} />}>Evaluation Criteria</SectionHeading>
+      <Card className="border-purple-200/80 dark:border-purple-800/80 shadow-sm hover:shadow-md transition-all duration-300 hover:translate-y-[-2px] bg-gradient-to-br from-purple-50/90 via-fuchsia-50/90 to-pink-50/90 dark:from-purple-950/40 dark:via-fuchsia-950/40 dark:to-pink-950/40">
+        <CardContent className="p-3 sm:p-4">
+          <ul className="list-disc pl-5 space-y-1 text-sm sm:text-base">
+            {evaluationCriteria.map((criterion, index) => (
+              <li key={index} className="hover:text-foreground transition-colors duration-200">
+                {criterion}
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+    </div>
+  );
+});
+EvaluationCriteria.displayName = "EvaluationCriteria";
+
 // Instructions section
 export const Instructions = memo(({ instructions }) => {
   if (!instructions) return null;
