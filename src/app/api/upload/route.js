@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
+import connectToDatabase from '@/lib/mongodb';
+import FileUpload from '@/models/FileUpload';
 import crypto from 'crypto';
-import { existsSync } from 'fs';
 
 export async function POST(request) {
   try {
@@ -16,19 +15,20 @@ export async function POST(request) {
       );
     }
 
-    // Get file data and generate a unique filename
+    // Get file data
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     
-    // Get file extension
+    // Get file metadata
     const originalName = file.name;
+    const contentType = file.type;
     const extension = originalName.split('.').pop().toLowerCase();
     
     // Only allow image files
-    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'];
     if (!allowedExtensions.includes(extension)) {
       return NextResponse.json(
-        { error: 'Only image files are allowed' },
+        { error: 'Only image and PDF files are allowed' },
         { status: 400 }
       );
     }
@@ -37,44 +37,28 @@ export async function POST(request) {
     const uniqueId = crypto.randomBytes(8).toString('hex');
     const fileName = `${uniqueId}.${extension}`;
     
-    // Determine the upload directory based on the section parameter
+    // Determine the section
     const section = formData.get('section') || 'misc';
-    let uploadDir;
     
-    switch (section) {
-      case 'council':
-        uploadDir = join(process.cwd(), 'public', 'assets', 'Council');
-        break;
-      case 'events':
-        uploadDir = join(process.cwd(), 'public', 'assets', 'Events');
-        break;
-      case 'banner':
-        uploadDir = join(process.cwd(), 'public', 'assets', 'Banner');
-        break;
-      default:
-        uploadDir = join(process.cwd(), 'public', 'assets', 'uploads');
-    }
+    // Connect to database
+    await connectToDatabase();
     
-    // Ensure the upload directory exists
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
-    }
+    // Store the file in MongoDB
+    const fileUpload = await FileUpload.create({
+      filename: fileName,
+      originalName,
+      contentType,
+      section,
+      data: buffer
+    });
     
-    // Write the file to the filesystem
-    const filePath = join(uploadDir, fileName);
-    await writeFile(filePath, buffer);
-    
-    // Return the public URL to the file
-    const publicPath = `/assets/${
-      section === 'council' ? 'Council' : 
-      section === 'events' ? 'Events' : 
-      section === 'banner' ? 'Banner' : 
-      'uploads'
-    }/${fileName}`;
+    // Return the file ID as the URL
+    const fileId = fileUpload._id.toString();
     
     return NextResponse.json({ 
       success: true,
-      url: publicPath
+      url: `/api/files/${fileId}`,
+      fileId
     });
   } catch (error) {
     console.error('Error uploading file:', error);

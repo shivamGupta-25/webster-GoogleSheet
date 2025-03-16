@@ -8,10 +8,12 @@ import TechelonsFormSubmittedClient from "@/components/techelons/TechelonsFormSu
 
 export const dynamic = 'force-dynamic';
 
-export default function TechelonsFormSubmittedPage({ searchParams }) {
-  const token = searchParams?.token || "";
-  const alreadyRegistered = searchParams?.alreadyRegistered === "true";
-  const eventId = searchParams?.eventId || "";
+export default async function TechelonsFormSubmittedPage({ searchParams }) {
+  // Await searchParams before accessing its properties
+  const params = await searchParams;
+  const token = params?.token || "";
+  const alreadyRegistered = params?.alreadyRegistered === "true";
+  const eventId = params?.eventId || "";
   
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">

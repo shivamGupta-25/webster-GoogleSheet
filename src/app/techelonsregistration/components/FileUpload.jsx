@@ -83,6 +83,9 @@ export default function FileUpload({
     fileInputRef.current?.click();
   };
 
+  // Check if the value is a file URL
+  const isFileUrl = value && (value.startsWith('/api/files/') || value.startsWith('/assets/'));
+
   return (
     <div className="space-y-2">
       <div className="flex flex-col space-y-2">
@@ -118,10 +121,22 @@ export default function FileUpload({
           )}
         </div>
         
-        {fileName && (
+        {isFileUrl && (
           <div className="flex items-center p-1 sm:p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
             <FileIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-blue-500" />
-            <span className="text-xs sm:text-sm truncate">{fileName}</span>
+            <span className="text-xs sm:text-sm truncate">
+              {fileName || "Uploaded file"}
+              {value.startsWith('/api/files/') && (
+                <a 
+                  href={value} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="ml-2 text-blue-500 hover:underline"
+                >
+                  View
+                </a>
+              )}
+            </span>
           </div>
         )}
         

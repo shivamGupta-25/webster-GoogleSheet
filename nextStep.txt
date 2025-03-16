@@ -1,0 +1,16 @@
+Error: Request timed out after 5 seconds. Please check your network connection and try again.
+
+src\lib\utils.js (128:17) @ fetchTechelonsData
+
+
+  126 |         // Handle abort error specifically
+  127 |         if (error.name === 'AbortError') {
+> 128 |           throw new Error('Request timed out after 5 seconds. Please check your network connection and try again.');
+      |                 ^
+  129 |         }
+  130 |         
+
+
+routes clean
+main page and techelons page component clean
+_utils folder
