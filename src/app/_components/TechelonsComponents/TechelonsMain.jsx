@@ -1,9 +1,8 @@
 // NOTE: This file was automatically updated to use fetchTechelonsData instead of importing from techelonsData directly.
-// Please review and update the component to use the async fetchTechelonsData function.
 import { useState, useEffect, lazy, Suspense, useCallback, useMemo, memo } from "react";
 import { useRouter } from "next/navigation";
 import PropTypes from 'prop-types';
-import { fetchTechelonsData } from '@/lib/utils'; // NOTE: You need to update this component to use the async fetchTechelonsData function
+import { fetchTechelonsData } from '@/lib/utils';
 import { Skeleton } from "@/components/ui/skeleton";
 import {
     FeatureCardSkeleton,
@@ -20,7 +19,7 @@ const MOBILE_BREAKPOINT = 768;
 const TABLET_BREAKPOINT = 1024;
 
 // Lazy load the SplineScene component with dynamic import
-const SplineScene = lazy(() => 
+const SplineScene = lazy(() =>
     import("@/components/ui/splite").then(mod => ({ default: mod.SplineScene }))
 );
 
@@ -31,15 +30,15 @@ const useResponsive = () => {
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
-        
+
         const updateDimensions = () => {
             const width = window.innerWidth;
             setIsMobile(width <= MOBILE_BREAKPOINT);
             setIsTablet(width > MOBILE_BREAKPOINT && width <= TABLET_BREAKPOINT);
         };
-        
+
         updateDimensions();
-        
+
         if (typeof ResizeObserver !== 'undefined') {
             const resizeObserver = new ResizeObserver(throttle(updateDimensions, 200));
             resizeObserver.observe(document.documentElement);
@@ -57,7 +56,7 @@ const useResponsive = () => {
 // Throttle function to limit execution frequency
 function throttle(func, delay) {
     let lastCall = 0;
-    return function(...args) {
+    return function (...args) {
         const now = Date.now();
         if (now - lastCall >= delay) {
             lastCall = now;
@@ -92,7 +91,7 @@ const useRegistrationStatus = () => {
                 });
             }
         };
-        
+
         getRegistrationStatus();
     }, []);
 
@@ -145,7 +144,7 @@ const TechelonsMain = () => {
     const [shouldRender3D, setShouldRender3D] = useState(false);
     const [reducedQuality, setReducedQuality] = useState(false);
     const [contentLoaded, setContentLoaded] = useState(false);
-    
+
     // State for content from CMS
     const [techelonsContent, setTechelonsContent] = useState({
         title: "Techelons'25",
@@ -167,21 +166,17 @@ const TechelonsMain = () => {
             try {
                 setIsLoading(true);
                 const data = await fetchTechelonsData();
-                
-                if (data) {
-                    // Check if there's UI content in the response
-                    if (data.uiContent) {
-                        setTechelonsContent(data.uiContent);
-                    }
+
+                if (data && data.uiContent) {
+                    setTechelonsContent(data.uiContent);
                 }
                 setIsLoading(false);
             } catch (error) {
                 console.error("Error fetching Techelons content:", error);
-                // Keep using default content on error
                 setIsLoading(false);
             }
         };
-        
+
         fetchTechelonsContent();
     }, []);
 
@@ -208,7 +203,7 @@ const TechelonsMain = () => {
     // Use IntersectionObserver to only load 3D when visible
     useEffect(() => {
         if (typeof window === 'undefined' || isMobile) return;
-        
+
         const observer = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting) {
@@ -218,21 +213,21 @@ const TechelonsMain = () => {
             },
             { threshold: 0.1, rootMargin: '100px' }
         );
-        
+
         const container = document.querySelector('.techelons-3d-container');
         if (container) {
             observer.observe(container);
         }
-        
+
         return () => observer.disconnect();
     }, [isMobile]);
 
-    // Simulate content loading with a shorter timeout to match TechelonsSchedule
+    // Simulate content loading with a timeout
     useEffect(() => {
         const contentTimer = setTimeout(() => {
             setContentLoaded(true);
         }, CONTENT_LOADING_TIMEOUT);
-        
+
         return () => clearTimeout(contentTimer);
     }, []);
 
@@ -242,7 +237,7 @@ const TechelonsMain = () => {
             setIsLoading(false);
             return;
         }
-        
+
         const loadingTimer = setTimeout(() => {
             if (!is3DLoaded) setIsLoading(false);
         }, LOADING_TIMEOUT);
@@ -250,75 +245,33 @@ const TechelonsMain = () => {
         return () => clearTimeout(loadingTimer);
     }, [is3DLoaded, isMobile]);
 
-    // Check device performance to determine if we should reduce 3D quality
+    // Check device performance for 3D quality
     useEffect(() => {
         if (typeof window === 'undefined' || isMobile) return;
-        
-        const checkPerformance = () => {
-            if (isTablet) {
-                setReducedQuality(true);
-                return;
-            }
-            
-            if (navigator.deviceMemory && navigator.deviceMemory < 4) {
-                setReducedQuality(true);
-                return;
-            }
-            
-            if (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4) {
-                setReducedQuality(true);
-                return;
-            }
-            
-            try {
-                const canvas = document.createElement('canvas');
-                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-                
-                if (!gl) {
-                    setReducedQuality(true);
-                    return;
-                }
-                
-                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-                if (debugInfo) {
-                    const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-                    if (renderer.includes('Intel') || 
-                        renderer.includes('AMD') && !renderer.includes('Radeon') ||
-                        renderer.includes('Apple') ||
-                        renderer.toLowerCase().includes('mobile')) {
-                        setReducedQuality(true);
-                        return;
-                    }
-                }
-            } catch (e) {
-                setReducedQuality(true);
-            }
-        };
-        
-        checkPerformance();
+
+        if (isTablet ||
+            (navigator.deviceMemory && navigator.deviceMemory < 4) ||
+            (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4)) {
+            setReducedQuality(true);
+        }
     }, [isMobile, isTablet]);
 
     // Memoize the status badge style
     const statusBadgeStyle = useMemo(() => ({
-        container: `inline-flex items-center gap-2 px-4 py-2 md:px-5 md:py-3 rounded-full ${
-            registrationOpen ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"
-        }`,
-        indicator: `w-2 h-2 rounded-full ${
-            registrationOpen ? "bg-green-500" : "bg-red-500"
-        } animate-pulse`,
-        text: `font-bold text-sm md:text-md ${
-            registrationOpen ? "text-green-600" : "text-red-600"
-        }`
+        container: `inline-flex items-center gap-2 px-4 py-2 md:px-5 md:py-3 rounded-full ${registrationOpen ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"
+            }`,
+        indicator: `w-2 h-2 rounded-full ${registrationOpen ? "bg-green-500" : "bg-red-500"
+            } animate-pulse`,
+        text: `font-bold text-sm md:text-md ${registrationOpen ? "text-green-600" : "text-red-600"
+            }`
     }), [registrationOpen]);
 
     // Memoize the 3D scene
     const scene3D = useMemo(() => {
         if (isMobile || !shouldRender3D) return null;
-        
-        const sceneUrl = reducedQuality 
-            ? "https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
-            : "https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode";
-        
+
+        const sceneUrl = "https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode";
+
         return (
             !isLoading && (
                 <SplineScene
@@ -328,7 +281,7 @@ const TechelonsMain = () => {
                 />
             )
         );
-    }, [isLoading, handle3DLoad, isMobile, shouldRender3D, reducedQuality]);
+    }, [isLoading, handle3DLoad, isMobile, shouldRender3D]);
 
     // Memoize the spotlight effects
     const spotlightEffects = useMemo(() => (
@@ -341,7 +294,7 @@ const TechelonsMain = () => {
     // Memoize the 3D container
     const scene3DContainer = useMemo(() => {
         if (isMobile) return null;
-        
+
         return (
             <div className="h-full flex techelons-3d-container">
                 {isLoading || !contentLoaded ? (
@@ -398,7 +351,7 @@ const TechelonsMain = () => {
     // Mobile-specific 3D alternative
     const mobileBanner = useMemo(() => {
         if (!isMobile) return null;
-        
+
         return (
             <div className="mb-6 rounded-2xl overflow-hidden shadow-lg">
                 {!contentLoaded ? (
@@ -411,7 +364,7 @@ const TechelonsMain = () => {
                     <div className="relative bg-gradient-to-br from-black to-indigo-950 py-10 px-4">
                         <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-blue-500 rounded-full opacity-20 blur-3xl" aria-hidden="true"></div>
                         <div className="absolute bottom-1/4 right-1/4 w-24 h-24 bg-purple-500 rounded-full opacity-20 blur-3xl" aria-hidden="true"></div>
-                        
+
                         <div className="relative text-center">
                             <div className="text-3xl sm:text-4xl font-bold mb-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] text-white">Tech<span className="text-blue-400">elons</span></div>
                             <div className="text-base sm:text-lg text-blue-200 mb-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{techelonsContent.festDate}</div>

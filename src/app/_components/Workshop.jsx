@@ -2,7 +2,7 @@
 // Please review and update the component to use the async fetchSiteContent function.
 'use client';
 
-import { memo, useMemo, useCallback, useState, useEffect } from 'react';
+import { memo, useCallback, useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -14,10 +14,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 const animations = {
   title: {
     hidden: { opacity: 0, y: 50 },
-    visible: { 
-      opacity: 1, 
-      y: 0, 
-      transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] } 
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }
     }
   },
   button: {

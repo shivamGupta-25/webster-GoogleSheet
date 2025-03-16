@@ -1,10 +1,10 @@
 "use client";
-import React, { memo, useMemo, useState, useEffect } from "react";
+import React, { memo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { fetchSiteContent } from '@/lib/utils';
 
-// Memoize animation configurations
+// Animation configurations
 const animations = {
     container: {
         hidden: { opacity: 0, y: 50 },
@@ -24,7 +24,7 @@ const animations = {
     }
 };
 
-// Memoized paragraph component for better performance
+// Paragraph component
 const Paragraph = memo(({ html, className }) => (
     <p className={className} dangerouslySetInnerHTML={{ __html: html }} />
 ));
@@ -61,10 +61,7 @@ const About = () => {
         return (
             <section className="flex items-center justify-center px-6 mb-12 md:px-12 lg:px-20 xl:px-32">
                 <div className="text-center mt-10 md:mt-16 w-full">
-                    {/* Title skeleton */}
                     <div className="h-24 sm:h-32 lg:h-36 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mx-auto max-w-2xl mb-8"></div>
-                    
-                    {/* Paragraph skeletons */}
                     <div className="mt-6 md:mt-8 max-w-4xl mx-auto space-y-4">
                         <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
                         <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>

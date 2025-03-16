@@ -10,7 +10,7 @@ const FileUploadSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now,
-    expires: '30d' // Automatically delete files after 30 days
+    expires: '455d' // Automatically delete files after 1 year and 3 months (approximately 455 days)
   }
 });
 

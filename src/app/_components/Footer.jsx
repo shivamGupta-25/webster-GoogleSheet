@@ -1,11 +1,11 @@
 "use client";
-import { useEffect, useState, memo, useCallback } from "react";
+import { useEffect, useState, memo } from "react";
 import Image from "next/image";
 import { FaInstagram, FaLinkedinIn, FaTwitter, FaFacebookF, FaYoutube } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { fetchSiteContent } from "@/lib/utils";
 
-// Memoize animation configurations
+// Animation configurations
 const animations = {
     fadeInUp: {
         hidden: { opacity: 0, y: 30 },
@@ -42,7 +42,7 @@ const defaultSocialLinks = [
     }
 ];
 
-// Memoized social link component
+// Social link component
 const SocialLink = memo(({ url, icon, hoverClass }) => {
     const IconComponent = iconComponents[icon] || FaInstagram;
     
@@ -66,7 +66,6 @@ const Footer = () => {
         socialLinks: defaultSocialLinks,
         logoImage: "/assets/Footer_logo.png"
     });
-    const [loading, setLoading] = useState(true);
 
     // Fetch footer data
     useEffect(() => {
@@ -85,16 +84,12 @@ const Footer = () => {
                 }
             } catch (error) {
                 console.error("Error fetching footer data:", error);
-                // Keep using default values on error
-            } finally {
-                setLoading(false);
             }
         };
         
         fetchFooterData();
     }, []);
 
-    // Get current year only once
     const currentYear = new Date().getFullYear();
 
     return (
@@ -136,7 +131,6 @@ const Footer = () => {
                 </motion.div>
             </div>
 
-            {/* Credit section */}
             <motion.div variants={animations.fadeInUp} className="text-center text-sm mt-8 border-t border-gray-700 pt-4 text-gray-500">
                 <p className="text-lg">&copy; {currentYear} Websters. All rights reserved.</p>
             </motion.div>

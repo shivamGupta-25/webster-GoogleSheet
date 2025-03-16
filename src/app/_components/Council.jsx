@@ -13,32 +13,32 @@ import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchSiteContent } from '@/lib/utils';
 
-// Optimized blur data URL for image placeholders (smaller SVG)
+// Optimized blur data URL for image placeholders
 const BLUR_DATA_URL = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiPjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmMWYxZjEiLz48L3N2Zz4=";
 
-// Animation variants - simplified for better performance
+// Animation variants
 const animations = {
     title: {
         hidden: { opacity: 0, y: 20 },
-        visible: { 
-            opacity: 1, 
-            y: 0, 
-            transition: { duration: 0.5 } 
+        visible: {
+            opacity: 1,
+            y: 0,
+            transition: { duration: 0.5 }
         }
     },
     card: {
         hidden: { opacity: 0 },
-        visible: { 
+        visible: {
             opacity: 1,
-            transition: { duration: 0.3 } 
+            transition: { duration: 0.3 }
         }
     }
 };
 
-// LinkedIn button component - memoized
+// LinkedIn button component
 const LinkedInButton = memo(({ url, name }) => {
     if (!url) return null;
-    
+
     return (
         <a
             href={url}
@@ -54,11 +54,10 @@ const LinkedInButton = memo(({ url, name }) => {
 
 LinkedInButton.displayName = 'LinkedInButton';
 
-// MemberCard component - memoized with proper dependency tracking
+// MemberCard component
 const MemberCard = memo(({ member, index }) => {
-    // Only prioritize loading for the first visible cards
     const isPriority = index < 2;
-    
+
     return (
         <motion.div
             variants={animations.card}
@@ -68,7 +67,6 @@ const MemberCard = memo(({ member, index }) => {
             className="h-full"
         >
             <Card className="overflow-hidden bg-white shadow-md hover:shadow-lg transition-shadow duration-200 p-0 h-full flex flex-col">
-                {/* 3:4 aspect ratio (height:width) */}
                 <div className="relative w-full" style={{ paddingTop: '133.33%' }}>
                     <Image
                         src={member.image}
@@ -103,7 +101,7 @@ const MemberCard = memo(({ member, index }) => {
 
 MemberCard.displayName = 'MemberCard';
 
-// Swiper configuration - defined outside component to prevent recreation
+// Swiper configuration
 const SWIPER_CONFIG = {
     modules: [Autoplay, EffectCoverflow],
     effect: "coverflow",
@@ -132,47 +130,52 @@ const SWIPER_CONFIG = {
     }
 };
 
-// Skeleton loader component for better UX during loading
+// Skeleton loader component
 const CouncilSkeleton = memo(() => (
-    <div className="w-full mx-auto px-4 py-6">
-        {/* Heading skeleton */}
-        <div className="mb-6 text-center">
-            <Skeleton className="h-8 sm:h-10 w-48 sm:w-64 mx-auto mb-2" />
-            <Skeleton className="h-3 sm:h-4 w-full max-w-xs sm:max-w-md mx-auto" />
-        </div>
-        
-        {/* Council members grid skeleton - responsive grid with different columns */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-            {[...Array(4)].map((_, index) => (
-                <div key={index} className="overflow-hidden bg-white dark:bg-gray-900 shadow-md rounded-xl h-auto">
-                    <div className="flex flex-col h-full">
-                        {/* Image skeleton with 3:4 aspect ratio */}
-                        <div className="w-full relative bg-gradient-to-b from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900" style={{ paddingTop: '133.33%' }}>
-                            <Skeleton className="absolute inset-0 w-full h-full" />
-                        </div>
-                        
-                        {/* Content skeleton */}
-                        <div className="p-3 sm:p-4 flex flex-col flex-grow space-y-2 sm:space-y-3">
-                            <Skeleton className="h-5 sm:h-6 w-3/4" />
-                            <Skeleton className="h-3 sm:h-4 w-1/2" />
-                            
-                            {/* Social icons skeleton */}
-                            <div className="flex mt-auto pt-2">
-                                <Skeleton className="h-6 w-6 sm:h-8 sm:w-8 rounded-full" />
+    <section className="w-full">
+        <div className="w-full px-0">
+            <div className="flex flex-col items-center justify-center space-y-2 sm:space-y-4 text-center mb-6 sm:mb-8 md:mb-12 px-3 sm:px-4 md:px-6">
+                <Skeleton className="h-12 sm:h-16 md:h-20 lg:h-24 w-64 sm:w-80 md:w-96 mx-auto" />
+                <Skeleton className="h-4 sm:h-5 md:h-6 w-full max-w-[600px] md:max-w-[700px] mx-auto" />
+            </div>
+            
+            <div className="w-full overflow-x-hidden">
+                <div className="flex space-x-4 px-4" style={{
+                    width: '100vw',
+                    marginLeft: '50%',
+                    transform: 'translateX(-50%)',
+                    paddingTop: '10px',
+                    paddingBottom: '20px'
+                }}>
+                    {[...Array(5)].map((_, index) => (
+                        <div key={index} className="flex-shrink-0" style={{ width: 'calc(100% / 3)' }}>
+                            <div className="px-1 py-2 h-full">
+                                <Card className="overflow-hidden bg-white shadow-md p-0 h-full flex flex-col">
+                                    <div className="relative w-full" style={{ paddingTop: '133.33%' }}>
+                                        <Skeleton className="absolute inset-0 w-full h-full" />
+                                    </div>
+                                    <CardContent className="p-4 text-center flex-grow flex flex-col justify-between">
+                                        <div>
+                                            <Skeleton className="h-5 w-3/4 mx-auto mb-2" />
+                                            <Skeleton className="h-4 w-1/2 mx-auto mb-2" />
+                                        </div>
+                                        <div className="mt-2 flex justify-center">
+                                            <Skeleton className="h-5 w-5 rounded-full" />
+                                        </div>
+                                    </CardContent>
+                                </Card>
                             </div>
                         </div>
-                    </div>
+                    ))}
                 </div>
-            ))}
+            </div>
         </div>
-    </div>
+    </section>
 ));
 
-// Add display name for better debugging
 CouncilSkeleton.displayName = 'CouncilSkeleton';
 
 const Council = () => {
-    // Use state to track if component is mounted to prevent hydration issues
     const [isMounted, setIsMounted] = useState(false);
     const [councilData, setCouncilData] = useState({
         title: "",
@@ -180,11 +183,10 @@ const Council = () => {
         members: []
     });
     const [isLoading, setIsLoading] = useState(true);
-    const [windowWidth, setWindowWidth] = useState(0);
-    
+
     useEffect(() => {
         setIsMounted(true);
-        
+
         const loadContent = async () => {
             try {
                 const content = await fetchSiteContent();
@@ -197,31 +199,13 @@ const Council = () => {
                 setIsLoading(false);
             }
         };
-        
+
         loadContent();
-        
-        // Add responsive window width tracking for better conditional rendering
-        const handleResize = () => {
-            setWindowWidth(window.innerWidth);
-        };
-        
-        // Set initial width
-        setWindowWidth(window.innerWidth);
-        
-        // Add event listener
-        window.addEventListener('resize', handleResize);
-        
-        // Clean up
-        return () => {
-            window.removeEventListener('resize', handleResize);
-        };
     }, []);
-    
-    // Destructure council data
+
     const { title, description, members } = councilData;
-    
-    // Memoize the slider content to prevent unnecessary re-renders
-    const renderSlides = useMemo(() => 
+
+    const renderSlides = useMemo(() =>
         members && members.map((member, index) => (
             <SwiperSlide key={member.name} className="h-auto" style={{ width: 'auto' }}>
                 <div className="px-1 py-2 h-full">
@@ -229,7 +213,7 @@ const Council = () => {
                 </div>
             </SwiperSlide>
         )),
-    [members]);
+        [members]);
 
     if (isLoading) {
         return <CouncilSkeleton />;
@@ -239,7 +223,7 @@ const Council = () => {
         <section id="council" className="w-full">
             <div className="w-full px-0">
                 <div className="flex flex-col items-center justify-center space-y-2 sm:space-y-4 text-center mb-6 sm:mb-8 md:mb-12 px-3 sm:px-4 md:px-6">
-                    <motion.h2 
+                    <motion.h2
                         className="text-6xl sm:text-6xl md:text-6xl lg:text-8xl font-bold tracking-tighter"
                         variants={animations.title}
                         initial="hidden"
@@ -248,7 +232,7 @@ const Council = () => {
                     >
                         {title}
                     </motion.h2>
-                    <motion.p 
+                    <motion.p
                         className="max-w-full sm:max-w-[600px] md:max-w-[700px] text-sm sm:text-base md:text-lg lg:text-xl text-gray-500 dark:text-gray-400"
                         variants={animations.title}
                         initial="hidden"
@@ -258,11 +242,11 @@ const Council = () => {
                         {description}
                     </motion.p>
                 </div>
-                
+
                 {isMounted && (
                     <div className="w-full overflow-x-hidden">
-                        <Swiper 
-                            {...SWIPER_CONFIG} 
+                        <Swiper
+                            {...SWIPER_CONFIG}
                             className="w-full"
                             style={{
                                 paddingTop: '10px',

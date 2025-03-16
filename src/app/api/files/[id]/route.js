@@ -5,7 +5,9 @@ import FileUpload from '@/models/FileUpload';
 
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    // Await params before destructuring
+    const resolvedParams = await params;
+    const { id } = resolvedParams;
     
     // Validate MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {

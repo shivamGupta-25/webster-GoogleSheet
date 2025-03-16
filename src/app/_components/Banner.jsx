@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, memo, useMemo, useState } from 'react';
+import React, { useEffect, memo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { motion, useAnimation } from 'framer-motion';
@@ -52,7 +52,7 @@ const Banner = () => {
     const loadContent = async () => {
       try {
         const content = await fetchSiteContent();
-        if (content && content.banner) {
+        if (content?.banner) {
           setBannerContent(content.banner);
         }
       } catch (error) {
@@ -72,10 +72,9 @@ const Banner = () => {
     }
   }, [controls, inView]);
 
-  // Memoize the router navigation function to prevent recreating on each render
-  const handleButtonClick = useMemo(() => () => {
+  const handleButtonClick = () => {
     router.push(bannerContent.buttonLink);
-  }, [router, bannerContent.buttonLink]);
+  };
 
   if (isLoading) {
     return (
@@ -109,13 +108,9 @@ const Banner = () => {
           variants={animations.content}
         >
           <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold">{bannerContent.title}</h1>
-          <h2 className="text-sm md:text-xl font-normal">
-            {bannerContent.subtitle}
-          </h2>
+          <h2 className="text-sm md:text-xl font-normal">{bannerContent.subtitle}</h2>
           <h3 className="text-xl md:text-2xl">{bannerContent.institution}</h3>
-          <p className="py-6 text-base md:text-lg max-w-2xl">
-            {bannerContent.description}
-          </p>
+          <p className="py-6 text-base md:text-lg max-w-2xl">{bannerContent.description}</p>
           <Button
             onClick={handleButtonClick}
             className="p-6 rounded-[30px] shadow-lg hover:scale-105 transition-all text-lg font-bold tracking-wide mt-4"
