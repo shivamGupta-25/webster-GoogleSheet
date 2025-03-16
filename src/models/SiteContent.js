@@ -45,6 +45,17 @@ const PastEventsSchema = new mongoose.Schema({
   events: [EventSchema]
 }, { _id: false });
 
+const FooterSchema = new mongoose.Schema({
+  email: String,
+  socialLinks: [{
+    id: String,
+    url: String,
+    icon: String,
+    hoverClass: String
+  }],
+  logoImage: String
+}, { _id: false });
+
 const WorkshopDetailSchema = new mongoose.Schema({
   label: String,
   value: String,
@@ -78,6 +89,7 @@ const SiteContentSchema = new mongoose.Schema({
   about: AboutSchema,
   council: CouncilSchema,
   pastEvents: PastEventsSchema,
+  footer: FooterSchema,
   workshop: WorkshopSchema
 }, { timestamps: true });
 

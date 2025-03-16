@@ -65,6 +65,7 @@ export default function AdminLayout({ children }) {
   const navigation = [
     { name: "Dashboard", href: "/admin", icon: Home },
     { name: "Content", href: "/admin/content", icon: FileText },
+    { name: "Footer", href: "/admin/footer", icon: FileText },
     { name: "Workshop", href: "/admin/workshop", icon: Users },
     { name: "Techelons", href: "/admin/techelons", icon: Users },
     { name: "Techelons Content", href: "/admin/techelons-content", icon: FileText },

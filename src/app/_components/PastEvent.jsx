@@ -133,8 +133,8 @@ const PastEvent = () => {
 
   return (
     <motion.section 
-      id="past-events"
-      className="relative py-16 md:py-24 overflow-hidden"
+      id="pastevent"
+      className="relative mt-22 mb-22 overflow-hidden"
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: "-100px" }}
@@ -145,7 +145,7 @@ const PastEvent = () => {
           className="flex flex-col items-center justify-center space-y-4 text-center mb-12"
           variants={itemVariants}
         >
-          <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">{title}</h2>
+          <h2 className="text-6xl font-bold tracking-tighter sm:text-8xl">{title}</h2>
           <p className="max-w-[700px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
             {description}
           </p>
