@@ -111,7 +111,7 @@ const EventModal = memo(({ event, isOpen, onClose }) => {
       if (event.registrationLink) {
         window.open(event.registrationLink, "_blank", "noopener,noreferrer");
       } else {
-        window.open(`/techelonsregistration`, "_blank");
+        window.open(`/techelonsregistration?eventId=${event.id}`, "_blank");
       }
     } catch (error) {
       console.error('Error handling registration:', error);
