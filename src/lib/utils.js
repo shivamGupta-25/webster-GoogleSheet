@@ -9,11 +9,11 @@ export function cn(...inputs) {
 let siteContentCache = null;
 let techelonsDataCache = null;
 let techelonsDataCacheTimestamp = null;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+const CACHE_DURATION = 30 * 1000; // Reduced to 30 seconds in milliseconds
 
 // Function to fetch site content
 export async function fetchSiteContent() {
-  if (siteContentCache) {
+  if (siteContentCache && (Date.now() - techelonsDataCacheTimestamp < CACHE_DURATION)) {
     return siteContentCache;
   }
   
@@ -37,6 +37,7 @@ export async function fetchSiteContent() {
         }
         
         siteContentCache = content;
+        techelonsDataCacheTimestamp = Date.now();
         return content;
       } catch (dbError) {
         console.error('Error connecting to database during build:', dbError);
@@ -44,8 +45,9 @@ export async function fetchSiteContent() {
         return null;
       }
     } else {
-      // In browser environment, use relative URL
-      const response = await fetch('/api/content');
+      // In browser environment, use relative URL with cache-busting parameter
+      const cacheBuster = Date.now();
+      const response = await fetch(`/api/content?_=${cacheBuster}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch site content');
@@ -53,6 +55,7 @@ export async function fetchSiteContent() {
       
       const data = await response.json();
       siteContentCache = data;
+      techelonsDataCacheTimestamp = Date.now();
       return data;
     }
   } catch (error) {
@@ -92,7 +95,7 @@ export async function fetchTechelonsData() {
       techelonsDataCacheTimestamp = now;
       return data;
     } else {
-      // In browser environment, use relative URL with timeout
+      // In browser environment, use relative URL with timeout and cache-busting
       // Use AbortController to properly cancel the fetch request on timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
@@ -100,8 +103,9 @@ export async function fetchTechelonsData() {
       }, 5000);
       
       try {
-        // Create the fetch promise with abort signal
-        const response = await fetch('/api/techelons', {
+        // Create the fetch promise with abort signal and cache-busting parameter
+        const cacheBuster = Date.now();
+        const response = await fetch(`/api/techelons?_=${cacheBuster}`, {
           signal: controller.signal
         });
         

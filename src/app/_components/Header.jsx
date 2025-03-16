@@ -153,6 +153,34 @@ const HeaderContent = ({ children }) => {
         getRegistrationStatus();
     }, []);
 
+    // Periodically refresh registration status
+    useEffect(() => {
+        // Don't refresh on admin pages to avoid conflicts with admin operations
+        if (pathname.startsWith('/admin')) {
+            return;
+        }
+        
+        const refreshInterval = setInterval(async () => {
+            try {
+                // Fetch Techelons data
+                const techelonsData = await fetchTechelonsData();
+                if (techelonsData && techelonsData.festInfo) {
+                    setTechelonsRegistrationEnabled(techelonsData.festInfo.registrationEnabled);
+                }
+                
+                // Fetch Site content for workshop data
+                const siteContent = await fetchSiteContent();
+                if (siteContent && siteContent.workshop) {
+                    setWorkshopRegistrationOpen(siteContent.workshop.isRegistrationOpen);
+                }
+            } catch (error) {
+                console.error("Error refreshing registration status:", error);
+            }
+        }, 60000); // Refresh every minute
+        
+        return () => clearInterval(refreshInterval);
+    }, [pathname]);
+
     // Scroll to section with element checking - optimized for performance
     const scrollToSection = useCallback((sectionId) => {
         if (!sectionId) return false;
