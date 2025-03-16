@@ -330,6 +330,13 @@ const EventCard = memo(({ event, openEventModal, index }) => {
                     {/* Event Title */}
                     <h3 className="text-sm sm:text-base md:text-lg font-bold mb-2 line-clamp-2 leading-tight group-hover:text-primary transition-colors duration-200">{event.name}</h3>
 
+                    {/* Tagline - if available */}
+                    {event.tagline && (
+                        <p className="text-xs sm:text-sm text-primary italic mb-2 line-clamp-1">
+                            {event.tagline}
+                        </p>
+                    )}
+
                     {/* Venue */}
                     <div className="inline-flex items-center text-xs text-muted-foreground mb-2 bg-muted/50 py-1 px-2 rounded-md">
                         <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1.5 flex-shrink-0" />
@@ -509,6 +516,7 @@ EventCard.propTypes = {
     event: PropTypes.shape({
         id: PropTypes.string.isRequired,
         name: PropTypes.string.isRequired,
+        tagline: PropTypes.string,
         category: PropTypes.string,
         image: PropTypes.string,
         startTime: PropTypes.string.isRequired,

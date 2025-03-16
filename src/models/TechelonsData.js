@@ -32,6 +32,7 @@ const EventSchema = new mongoose.Schema({
   id: String,
   image: String,
   name: String,
+  tagline: String,
   shortDescription: String,
   description: String,
   category: String,

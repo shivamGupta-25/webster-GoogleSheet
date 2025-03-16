@@ -34,6 +34,13 @@ export const EventDetails = memo(({ event, formattedDate, formattedTime, dayOfWe
       title="Event Details"
       className="overflow-hidden"
     >
+      {/* Tagline - if available */}
+      {event.tagline && (
+        <div className="mb-3 text-sm italic text-primary border-l-2 border-primary pl-3 py-1">
+          "{event.tagline}"
+        </div>
+      )}
+      
       <div className="text-sm text-muted-foreground grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Date and Time */}
         <div className="flex items-start">

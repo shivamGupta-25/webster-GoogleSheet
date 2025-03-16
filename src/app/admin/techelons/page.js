@@ -30,6 +30,7 @@ export default function TechelonsManagement() {
     id: "",
     name: "",
     shortDescription: "",
+    tagline: "",
     description: "",
     image: "",
     category: "",
@@ -207,6 +208,7 @@ export default function TechelonsManagement() {
       id: "",
       name: "",
       shortDescription: "",
+      tagline: "",
       description: "",
       image: "",
       category: "",
@@ -426,6 +428,16 @@ export default function TechelonsManagement() {
                           id={`event-short-desc-${index}`}
                           value={event.shortDescription}
                           onChange={(e) => handleEventChange(index, "shortDescription", e.target.value)}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`event-tagline-${index}`}>Tagline</Label>
+                        <Input
+                          id={`event-tagline-${index}`}
+                          value={event.tagline || ""}
+                          onChange={(e) => handleEventChange(index, "tagline", e.target.value)}
+                          placeholder="Catchy tagline for the event"
                         />
                       </div>
                       
@@ -855,6 +867,16 @@ export default function TechelonsManagement() {
                     value={newEvent.shortDescription}
                     onChange={(e) => handleNewEventChange("shortDescription", e.target.value)}
                     placeholder="Brief description for event cards"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="new-event-tagline">Tagline</Label>
+                  <Input
+                    id="new-event-tagline"
+                    value={newEvent.tagline || ""}
+                    onChange={(e) => handleNewEventChange("tagline", e.target.value)}
+                    placeholder="Catchy tagline for the event"
                   />
                 </div>
                 

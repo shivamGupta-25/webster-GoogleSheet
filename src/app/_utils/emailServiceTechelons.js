@@ -117,6 +117,7 @@ export async function sendTechelonsRegistrationEmail(registration, event, isTeam
           <h2>Event Details</h2>
           <ul>
             <li><strong>Event:</strong> ${event.name}</li>
+            ${event.tagline ? `<li><strong>Tagline:</strong> <em>${event.tagline}</em></li>` : ''}
             <li><strong>Date:</strong> ${eventDate}</li>
             <li><strong>Time:</strong> ${eventTime}</li>
             <li><strong>Venue:</strong> ${eventVenue}</li>
