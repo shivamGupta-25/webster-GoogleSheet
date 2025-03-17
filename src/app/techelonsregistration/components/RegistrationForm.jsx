@@ -127,29 +127,65 @@ export default function RegistrationForm({
   // Update form values when teamMembers state changes
   useEffect(() => {
     if (isTeamEvent) {
-      setValue("teamMembers", teamMembers);
+      // Get current form values
+      const currentValues = getValues();
+      const currentTeamMembers = currentValues.teamMembers || [];
+      
+      // Only update if there's a difference and we're not in the middle of an add/remove operation
+      if (JSON.stringify(currentTeamMembers) !== JSON.stringify(teamMembers)) {
+        setValue("teamMembers", teamMembers, {
+          shouldValidate: true,
+          shouldDirty: true,
+          shouldTouch: true
+        });
+      }
     }
-  }, [teamMembers, setValue, isTeamEvent]);
+  }, [teamMembers, setValue, isTeamEvent, getValues]);
   
   // Watch for college selection to show/hide other college field
   const mainParticipantCollege = watch("mainParticipant.college");
   
+  // Remove team member
+  const removeTeamMember = useCallback((index) => {
+    // Get current form values before removing the member
+    const currentValues = getValues();
+    const currentTeamMembers = [...(currentValues.teamMembers || [])];
+    
+    // Remove the member at the specified index
+    currentTeamMembers.splice(index, 1);
+    
+    // Update both local state and form values
+    setTeamMembers(currentTeamMembers);
+    
+    // Update form values while preserving other team members' data
+    setValue("teamMembers", currentTeamMembers, {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true
+    });
+  }, [getValues, setValue]);
+
   // Add team member
   const addTeamMember = useCallback(() => {
     if (teamMembers.length < maxTeamSize - 1) {
-      setTeamMembers([...teamMembers, {}]);
+      // Get current form values before adding new member
+      const currentValues = getValues();
+      const currentTeamMembers = [...(currentValues.teamMembers || [])];
+      
+      // Add new empty member
+      currentTeamMembers.push({});
+      
+      // Update both local state and form values
+      setTeamMembers(currentTeamMembers);
+      
+      // Update form values while preserving existing team members' data
+      setValue("teamMembers", currentTeamMembers, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true
+      });
     }
-  }, [teamMembers, maxTeamSize]);
-  
-  // Remove team member
-  const removeTeamMember = useCallback((index) => {
-    const newTeamMembers = [...teamMembers];
-    newTeamMembers.splice(index, 1);
-    setTeamMembers(newTeamMembers);
-    
-    // Trigger validation
-    trigger("teamMembers");
-  }, [teamMembers, trigger]);
+  }, [maxTeamSize, getValues, setValue]);
   
   // Handle form submission
   const onSubmit = useCallback(async (data) => {
@@ -164,6 +200,21 @@ export default function RegistrationForm({
     const toastId = toast.loading("Submitting your registration...");
     
     try {
+      // Update college field with custom college name if "Other" is selected
+      if (data.mainParticipant.college === "Other" && data.mainParticipant.otherCollege) {
+        data.mainParticipant.college = data.mainParticipant.otherCollege;
+      }
+      
+      // Update college field for team members if "Other" is selected
+      if (data.teamMembers) {
+        data.teamMembers = data.teamMembers.map(member => {
+          if (member.college === "Other" && member.otherCollege) {
+            member.college = member.otherCollege;
+          }
+          return member;
+        });
+      }
+      
       // Prepare payload
       const payload = {
         eventId: event.id,
