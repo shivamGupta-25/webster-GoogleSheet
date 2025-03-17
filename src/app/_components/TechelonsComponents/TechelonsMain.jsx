@@ -69,7 +69,8 @@ function throttle(func, delay) {
 const useRegistrationStatus = () => {
     const [registrationStatus, setRegistrationStatus] = useState({
         registrationOpen: false,
-        statusMessage: "Loading..."
+        statusMessage: "Loading...",
+        daysLeft: null
     });
 
     useEffect(() => {
@@ -78,16 +79,46 @@ const useRegistrationStatus = () => {
                 const data = await fetchTechelonsData();
                 if (data && data.festInfo) {
                     const regStatus = data.festInfo.registrationEnabled;
+                    
+                    // Calculate days left until registration deadline
+                    let daysLeft = null;
+                    let statusMessage = regStatus ? "Registration Open" : "Registration Closed";
+                    
+                    if (regStatus && data.festInfo.dates && data.festInfo.dates.registrationDeadline) {
+                        const deadlineDate = new Date(data.festInfo.dates.registrationDeadline);
+                        const currentDate = new Date();
+                        
+                        // Reset time part for accurate day calculation
+                        deadlineDate.setHours(0, 0, 0, 0);
+                        currentDate.setHours(0, 0, 0, 0);
+                        
+                        // Calculate difference in days
+                        const timeDiff = deadlineDate.getTime() - currentDate.getTime();
+                        daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                        
+                        // Update status message with days left
+                        if (daysLeft > 0) {
+                            statusMessage = `Registration Open • ${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`;
+                        } else if (daysLeft === 0) {
+                            statusMessage = "Registration Open • Last day!";
+                        } else {
+                            // If deadline has passed but registration is still open
+                            statusMessage = "Registration Open";
+                        }
+                    }
+                    
                     setRegistrationStatus({
                         registrationOpen: regStatus,
-                        statusMessage: regStatus ? "Registration Open" : "Registration Closed"
+                        statusMessage,
+                        daysLeft
                     });
                 }
             } catch (error) {
                 console.error("Error fetching registration status:", error);
                 setRegistrationStatus({
                     registrationOpen: false,
-                    statusMessage: "Registration Status Unavailable"
+                    statusMessage: "Registration Status Unavailable",
+                    daysLeft: null
                 });
             }
         };
@@ -138,7 +169,7 @@ const DEFAULT_FEATURES = [
 const TechelonsMain = () => {
     const router = useRouter();
     const { isMobile, isTablet } = useResponsive();
-    const { registrationOpen, statusMessage } = useRegistrationStatus();
+    const { registrationOpen, statusMessage, daysLeft } = useRegistrationStatus();
     const [is3DLoaded, setIs3DLoaded] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [shouldRender3D, setShouldRender3D] = useState(false);
@@ -258,13 +289,28 @@ const TechelonsMain = () => {
 
     // Memoize the status badge style
     const statusBadgeStyle = useMemo(() => ({
-        container: `inline-flex items-center gap-2 px-4 py-2 md:px-5 md:py-3 rounded-full ${registrationOpen ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"
-            }`,
-        indicator: `w-2 h-2 rounded-full ${registrationOpen ? "bg-green-500" : "bg-red-500"
-            } animate-pulse`,
-        text: `font-bold text-sm md:text-md ${registrationOpen ? "text-green-600" : "text-red-600"
-            }`
-    }), [registrationOpen]);
+        container: `inline-flex items-center gap-2 px-4 py-2 md:px-5 md:py-3 rounded-full ${
+            registrationOpen 
+                ? daysLeft !== null && daysLeft <= 3 && daysLeft >= 0
+                    ? "bg-yellow-50 border border-yellow-200" 
+                    : "bg-green-50 border border-green-200"
+                : "bg-red-50 border border-red-200"
+        }`,
+        indicator: `w-2 h-2 rounded-full ${
+            registrationOpen
+                ? daysLeft !== null && daysLeft <= 3 && daysLeft >= 0
+                    ? "bg-yellow-500 animate-pulse"
+                    : "bg-green-500 animate-pulse"
+                : "bg-red-500 animate-pulse"
+        }`,
+        text: `font-bold text-sm md:text-md ${
+            registrationOpen
+                ? daysLeft !== null && daysLeft <= 3 && daysLeft >= 0
+                    ? "text-yellow-600"
+                    : "text-green-600"
+                : "text-red-600"
+        }`
+    }), [registrationOpen, daysLeft]);
 
     // Memoize the 3D scene
     const scene3D = useMemo(() => {
