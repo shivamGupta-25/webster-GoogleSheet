@@ -187,8 +187,9 @@ const HeaderContent = ({ children }) => {
 
         const element = document.getElementById(sectionId);
         if (element) {
-            // Use a more reliable scrolling method for mobile with optimized performance
-            const y = element.getBoundingClientRect().top + window.scrollY;
+            // For non-sticky header, add a small offset for better visual positioning
+            const offset = 20; // Small visual offset to position section better
+            const y = element.getBoundingClientRect().top + window.scrollY - offset;
             
             // Use requestAnimationFrame for smoother scrolling
             requestAnimationFrame(() => {
@@ -293,14 +294,12 @@ const HeaderContent = ({ children }) => {
                 return;
             }
 
-            // Use requestAnimationFrame for smoother performance
-            requestAnimationFrame(() => {
-                setTimeout(attemptScroll, SCROLL_CHECK_INTERVAL);
-            });
+            // Use setTimeout to wait for elements to fully load
+            setTimeout(attemptScroll, SCROLL_CHECK_INTERVAL);
         };
 
-        // Start scrolling sooner
-        requestAnimationFrame(attemptScroll);
+        // Delay initial scroll attempt to ensure all elements are loaded
+        setTimeout(attemptScroll, 100);
 
     }, [isHomePage, scrollToSection]);
 

@@ -147,7 +147,7 @@ const PastEvent = () => {
   return (
     <motion.section 
       id="pastevent"
-      className="relative mt-22 mb-22 overflow-hidden"
+      className="relative pt-8 mb-22 overflow-hidden"
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: "-100px" }}
