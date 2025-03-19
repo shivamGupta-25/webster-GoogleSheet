@@ -187,17 +187,19 @@ const HeaderContent = ({ children }) => {
 
         const element = document.getElementById(sectionId);
         if (element) {
-            // For non-sticky header, add a small offset for better visual positioning
-            const offset = 20; // Small visual offset to position section better
-            const y = element.getBoundingClientRect().top + window.scrollY - offset;
+            // Calculate element position directly using element.offsetTop
+            // This is more reliable than getBoundingClientRect when page is still loading
+            const offset = 20; // Visual offset
+            const y = element.offsetTop - offset;
             
-            // Use requestAnimationFrame for smoother scrolling
-            requestAnimationFrame(() => {
+            // Use scrollTo with a delay to ensure the page has fully rendered
+            setTimeout(() => {
                 window.scrollTo({
                     top: y,
                     behavior: 'smooth'
                 });
-            });
+            }, 50);
+            
             return true;
         }
 
@@ -224,10 +226,11 @@ const HeaderContent = ({ children }) => {
                 sessionStorage.setItem('scrollTarget', sectionId);
                 router.push('/');
             } else {
-                // Already on home page, scroll directly
-                requestAnimationFrame(() => {
+                // Already on home page, scroll directly with a short delay
+                // to ensure proper element positioning
+                setTimeout(() => {
                     scrollToSection(sectionId);
-                });
+                }, 50);
             }
         } else {
             // Standard navigation
@@ -285,22 +288,30 @@ const HeaderContent = ({ children }) => {
         pendingScrollTarget = null;
         sessionStorage.removeItem('scrollTarget');
 
-        // Improved polling mechanism with better performance
-        let attempts = 0;
-
-        const attemptScroll = () => {
-            attempts++;
-            if (scrollToSection(targetId) || attempts >= SCROLL_MAX_ATTEMPTS) {
-                return;
-            }
-
-            // Use setTimeout to wait for elements to fully load
-            setTimeout(attemptScroll, SCROLL_CHECK_INTERVAL);
-        };
-
-        // Delay initial scroll attempt to ensure all elements are loaded
-        setTimeout(attemptScroll, 100);
-
+        // Give more time for the page to fully load and render
+        // This ensures all elements have their final dimensions and positions
+        const initialDelay = 300;
+        
+        setTimeout(() => {
+            // Try scrolling directly first
+            if (scrollToSection(targetId)) return;
+            
+            // If first attempt fails, use polling as a fallback
+            let attempts = 0;
+            const maxAttempts = SCROLL_MAX_ATTEMPTS;
+            
+            const attemptScroll = () => {
+                attempts++;
+                if (scrollToSection(targetId) || attempts >= maxAttempts) {
+                    return;
+                }
+                
+                setTimeout(attemptScroll, SCROLL_CHECK_INTERVAL);
+            };
+            
+            attemptScroll();
+        }, initialDelay);
+        
     }, [isHomePage, scrollToSection]);
 
     // Lock body scroll when mobile menu is open
