@@ -112,5 +112,9 @@ TechelonsRegistrationSchema.index(
   { unique: true }
 );
 
+// Create indexes for team members' emails and phones for faster lookup
+TechelonsRegistrationSchema.index({ eventId: 1, 'teamMembers.email': 1 });
+TechelonsRegistrationSchema.index({ eventId: 1, 'teamMembers.phone': 1 });
+
 // Create model if it doesn't exist already
 export default mongoose.models.TechelonsRegistration || mongoose.model('TechelonsRegistration', TechelonsRegistrationSchema); 

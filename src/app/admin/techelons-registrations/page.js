@@ -263,14 +263,14 @@ export default function TechelonsRegistrationsPage() {
       </Card>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
-            <DialogDescription>
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription>
               Are you sure you want to delete this registration? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
           <div className="py-4">
             {selectedRegistration && (
               <div className="space-y-2">
@@ -280,22 +280,17 @@ export default function TechelonsRegistrationsPage() {
               </div>
             )}
           </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteDialog(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
               onClick={() => selectedRegistration && deleteRegistration(selectedRegistration._id)}
+              className="bg-destructive hover:bg-destructive/90"
             >
               Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Flush Confirmation Alert Dialog */}
       <AlertDialog open={showFlushDialog} onOpenChange={setShowFlushDialog}>

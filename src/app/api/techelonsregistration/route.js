@@ -74,9 +74,60 @@ function generateRegistrationToken(registration) {
   return base64Token;
 }
 
+// Helper function to safely check for duplicates within the same team
+function checkInternalDuplicates(registrationData) {
+  try {
+    const emails = new Set();
+    const phones = new Set();
+    
+    // Add main participant if valid
+    if (registrationData.mainParticipant?.email) {
+      emails.add(registrationData.mainParticipant.email.toLowerCase());
+    }
+    
+    if (registrationData.mainParticipant?.phone) {
+      phones.add(registrationData.mainParticipant.phone);
+    }
+    
+    // Check team members
+    for (const member of registrationData.teamMembers || []) {
+      if (!member || !member.email || !member.phone) continue;
+      
+      const email = member.email.toLowerCase();
+      const phone = member.phone;
+      
+      if (emails.has(email)) {
+        return { 
+          error: true,
+          message: `You cannot use the same email address (${email}) for multiple team members. Each team member must have a unique email address.`,
+          type: 'duplicate_email'
+        };
+      }
+      
+      if (phones.has(phone)) {
+        return { 
+          error: true,
+          message: `You cannot use the same phone number (${phone}) for multiple team members. Each team member must have a unique phone number.`,
+          type: 'duplicate_phone'
+        };
+      }
+      
+      emails.add(email);
+      phones.add(phone);
+    }
+    
+    return { error: false };
+  } catch (error) {
+    console.error('Error in checkInternalDuplicates:', error);
+    return { error: false }; // Continue with registration even if check fails
+  }
+}
+
 // POST handler for registration
 export async function POST(request) {
   try {
+    console.log('Starting techelons registration process');
+    
     // Add request body logging for debugging
     const body = await request.json().catch(error => {
       console.error('Error parsing request body:', error);
@@ -84,14 +135,17 @@ export async function POST(request) {
     });
     
     if (!body) {
+      console.error('Invalid request body received');
       return NextResponse.json({ 
         error: 'Invalid request body' 
       }, { status: 400 });
     }
     
     // Validate request body
+    console.log('Validating request body');
     const validationResult = registrationSchema.safeParse(body);
     if (!validationResult.success) {
+      console.error('Validation errors:', JSON.stringify(validationResult.error.errors));
       return NextResponse.json({ 
         error: 'Validation error', 
         details: validationResult.error.errors 
@@ -99,10 +153,13 @@ export async function POST(request) {
     }
     
     const registrationData = validationResult.data;
+    console.log(`Processing registration for event: ${registrationData.eventId}, isTeamEvent: ${registrationData.isTeamEvent}`);
     
     // Connect to database with better error handling
     try {
+      console.log('Connecting to database');
       await connectToDatabase();
+      console.log('Database connection successful');
     } catch (dbError) {
       console.error('Database connection error:', dbError);
       return NextResponse.json({ 
@@ -145,33 +202,162 @@ export async function POST(request) {
         }, { status: 400 });
       }
       
-      // Check for duplicate emails and phone numbers within the team
-      const emails = new Set();
-      const phones = new Set();
-      
-      // Add main participant
-      emails.add(registrationData.mainParticipant.email.toLowerCase());
-      phones.add(registrationData.mainParticipant.phone);
-      
-      // Check team members
-      for (const member of registrationData.teamMembers || []) {
-        const email = member.email.toLowerCase();
-        const phone = member.phone;
-        
-        if (emails.has(email)) {
-          return NextResponse.json({ 
-            error: `You cannot use the same email address (${email}) for multiple team members. Each team member must have a unique email address.` 
-          }, { status: 400 });
+      // Check for duplicate emails and phone numbers within the team using helper function
+      const internalDuplicateCheck = checkInternalDuplicates(registrationData);
+      if (internalDuplicateCheck.error) {
+        return NextResponse.json({ 
+          error: internalDuplicateCheck.message 
+        }, { status: 400 });
+      }
+
+      // Now also check if any team members' emails or phones are already registered for this event
+      if (registrationData.teamMembers && registrationData.teamMembers.length > 0) {
+        try {
+          // Extract all emails and phones to check (filter out any empty values)
+          const teamMemberEmails = registrationData.teamMembers
+            .map(member => member.email?.toLowerCase())
+            .filter(email => email);
+          
+          const teamMemberPhones = registrationData.teamMembers
+            .map(member => member.phone)
+            .filter(phone => phone);
+            
+          // Skip check if there are no valid emails or phones to check
+          if (teamMemberEmails.length > 0) {
+            // Check for existing registrations with team member emails in a single query
+            const existingEmailRegistrations = await TechelonsRegistration.findOne({
+              eventId: registrationData.eventId,
+              $or: [
+                { 'mainParticipant.email': { $in: teamMemberEmails } },
+                { 'teamMembers.email': { $in: teamMemberEmails } }
+              ]
+            }, { 'mainParticipant.email': 1, 'teamMembers.email': 1 });
+            
+            if (existingEmailRegistrations) {
+              // Determine which email caused the conflict
+              let conflictEmail = '';
+              
+              // Check if the conflict is with a main participant
+              const mainEmail = existingEmailRegistrations.mainParticipant?.email?.toLowerCase();
+              if (mainEmail && teamMemberEmails.includes(mainEmail)) {
+                conflictEmail = mainEmail;
+              } else {
+                // Check if conflict is with a team member
+                for (const member of existingEmailRegistrations.teamMembers || []) {
+                  const memberEmail = member.email?.toLowerCase();
+                  if (memberEmail && teamMemberEmails.includes(memberEmail)) {
+                    conflictEmail = memberEmail;
+                    break;
+                  }
+                }
+              }
+              
+              // Get more information about the existing registration for better error message
+              let detailedMessage = `The email address ${conflictEmail || 'provided'} is already registered for this event.`;
+              
+              try {
+                // Find the full registration details to provide more context
+                const fullRegistrationDetails = await TechelonsRegistration.findOne({
+                  eventId: registrationData.eventId,
+                  $or: [
+                    { 'mainParticipant.email': conflictEmail },
+                    { 'teamMembers.email': conflictEmail }
+                  ]
+                });
+                
+                if (fullRegistrationDetails) {
+                  const isMainParticipant = fullRegistrationDetails.mainParticipant.email.toLowerCase() === conflictEmail.toLowerCase();
+                  const participantName = isMainParticipant 
+                    ? fullRegistrationDetails.mainParticipant.name
+                    : fullRegistrationDetails.teamMembers.find(m => m.email.toLowerCase() === conflictEmail.toLowerCase())?.name;
+                  
+                  detailedMessage = `The email address ${conflictEmail} is already registered for "${event.name}" ${
+                    fullRegistrationDetails.isTeamEvent 
+                      ? `as part of team "${fullRegistrationDetails.teamName || 'Unnamed Team'}"` 
+                      : `as an individual participant`
+                  }${participantName ? ` under the name "${participantName}"` : ''}.`;
+                }
+              } catch (detailError) {
+                console.error('Error getting detailed registration info:', detailError);
+                // Fall back to basic error message if detailed lookup fails
+              }
+              
+              return NextResponse.json({ 
+                error: detailedMessage
+              }, { status: 400 });
+            }
+          }
+          
+          // Skip check if there are no valid phones to check
+          if (teamMemberPhones.length > 0) {
+            // Check for existing registrations with team member phones in a single query
+            const existingPhoneRegistrations = await TechelonsRegistration.findOne({
+              eventId: registrationData.eventId,
+              $or: [
+                { 'mainParticipant.phone': { $in: teamMemberPhones } },
+                { 'teamMembers.phone': { $in: teamMemberPhones } }
+              ]
+            }, { 'mainParticipant.phone': 1, 'teamMembers.phone': 1 });
+            
+            if (existingPhoneRegistrations) {
+              // Determine which phone caused the conflict
+              let conflictPhone = '';
+              
+              // Check if the conflict is with a main participant
+              const mainPhone = existingPhoneRegistrations.mainParticipant?.phone;
+              if (mainPhone && teamMemberPhones.includes(mainPhone)) {
+                conflictPhone = mainPhone;
+              } else {
+                // Check if conflict is with a team member
+                for (const member of existingPhoneRegistrations.teamMembers || []) {
+                  const memberPhone = member.phone;
+                  if (memberPhone && teamMemberPhones.includes(memberPhone)) {
+                    conflictPhone = memberPhone;
+                    break;
+                  }
+                }
+              }
+              
+              // Get more information about the existing registration for better error message
+              let detailedMessage = `The phone number ${conflictPhone || 'provided'} is already registered for this event.`;
+              
+              try {
+                // Find the full registration details to provide more context
+                const fullRegistrationDetails = await TechelonsRegistration.findOne({
+                  eventId: registrationData.eventId,
+                  $or: [
+                    { 'mainParticipant.phone': conflictPhone },
+                    { 'teamMembers.phone': conflictPhone }
+                  ]
+                });
+                
+                if (fullRegistrationDetails) {
+                  const isMainParticipant = fullRegistrationDetails.mainParticipant.phone === conflictPhone;
+                  const participantName = isMainParticipant 
+                    ? fullRegistrationDetails.mainParticipant.name
+                    : fullRegistrationDetails.teamMembers.find(m => m.phone === conflictPhone)?.name;
+                  
+                  detailedMessage = `The phone number ${conflictPhone} is already registered for "${event.name}" ${
+                    fullRegistrationDetails.isTeamEvent 
+                      ? `as part of team "${fullRegistrationDetails.teamName || 'Unnamed Team'}"` 
+                      : `as an individual participant`
+                  }${participantName ? ` under the name "${participantName}"` : ''}.`;
+                }
+              } catch (detailError) {
+                console.error('Error getting detailed registration info for phone:', detailError);
+                // Fall back to basic error message if detailed lookup fails
+              }
+              
+              return NextResponse.json({ 
+                error: detailedMessage
+              }, { status: 400 });
+            }
+          }
+        } catch (checkError) {
+          console.error('Error checking for team member duplicates:', checkError);
+          // Continue with registration even if the duplicate check fails
+          // This is better than preventing valid registrations due to an error in the check
         }
-        
-        if (phones.has(phone)) {
-          return NextResponse.json({ 
-            error: `You cannot use the same phone number (${phone}) for multiple team members. Each team member must have a unique phone number.` 
-          }, { status: 400 });
-        }
-        
-        emails.add(email);
-        phones.add(phone);
       }
     }
     
@@ -184,10 +370,28 @@ export async function POST(request) {
     if (existingRegistrationByEmail) {
       const registrationToken = generateRegistrationToken(existingRegistrationByEmail);
       console.log('User already registered with this email, returning token:', registrationToken.substring(0, 20) + '...');
+      
+      // Create a more detailed message
+      let detailedMessage = 'You are already registered for this event with this email address.';
+      
+      try {
+        // Add details about the registration
+        detailedMessage = `The email address ${registrationData.mainParticipant.email} is already registered for "${event.name}" ${
+          existingRegistrationByEmail.isTeamEvent 
+            ? `as ${existingRegistrationByEmail.mainParticipant.email.toLowerCase() === registrationData.mainParticipant.email.toLowerCase() 
+                ? `the team leader of "${existingRegistrationByEmail.teamName || 'Unnamed Team'}"` 
+                : `a team member in "${existingRegistrationByEmail.teamName || 'Unnamed Team'}"`}`
+            : `as an individual participant`
+        } under the name "${existingRegistrationByEmail.mainParticipant.name}".`;
+      } catch (detailError) {
+        console.error('Error creating detailed message for email:', detailError);
+        // Fall back to basic message
+      }
+      
       return NextResponse.json({ 
         alreadyRegistered: true,
         registrationToken,
-        message: 'You are already registered for this event with this email address' 
+        message: detailedMessage
       });
     }
     
@@ -200,10 +404,28 @@ export async function POST(request) {
     if (existingRegistrationByPhone) {
       const registrationToken = generateRegistrationToken(existingRegistrationByPhone);
       console.log('User already registered with this phone number, returning token:', registrationToken.substring(0, 20) + '...');
+      
+      // Create a more detailed message
+      let detailedMessage = 'You are already registered for this event with this phone number.';
+      
+      try {
+        // Add details about the registration
+        detailedMessage = `The phone number ${registrationData.mainParticipant.phone} is already registered for "${event.name}" ${
+          existingRegistrationByPhone.isTeamEvent 
+            ? `as ${existingRegistrationByPhone.mainParticipant.phone === registrationData.mainParticipant.phone 
+                ? `the team leader of "${existingRegistrationByPhone.teamName || 'Unnamed Team'}"` 
+                : `a team member in "${existingRegistrationByPhone.teamName || 'Unnamed Team'}"`}`
+            : `as an individual participant`
+        } under the name "${existingRegistrationByPhone.mainParticipant.name}".`;
+      } catch (detailError) {
+        console.error('Error creating detailed message for phone:', detailError);
+        // Fall back to basic message
+      }
+      
       return NextResponse.json({ 
         alreadyRegistered: true,
         registrationToken,
-        message: 'You are already registered for this event with this phone number' 
+        message: detailedMessage
       });
     }
     
@@ -252,9 +474,16 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error('Error processing registration:', error);
+    console.error('Error details:', {
+      message: error.message || 'No message',
+      name: error.name || 'No name',
+      stack: error.stack || 'No stack trace',
+      code: error.code || 'No error code'
+    });
     
     // Handle duplicate key error (MongoDB error code 11000)
     if (error.code === 11000) {
+      console.log('MongoDB duplicate key error detected');
       return NextResponse.json({ 
         error: 'You are already registered for this event' 
       }, { status: 409 });

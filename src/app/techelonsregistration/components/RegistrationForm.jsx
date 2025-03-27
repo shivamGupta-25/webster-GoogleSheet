@@ -68,6 +68,8 @@ const ERROR_MESSAGES = {
   DUPLICATE_PHONE: "This phone number is already registered for this event.",
   DUPLICATE_TEAM_EMAIL: "You cannot use the same email address for multiple team members. Each team member must have a unique email.",
   DUPLICATE_TEAM_PHONE: "You cannot use the same phone number for multiple team members. Each team member must have a unique phone number.",
+  TEAM_MEMBER_EMAIL_EXISTS: "One of your team members' email addresses is already registered for this event.",
+  TEAM_MEMBER_PHONE_EXISTS: "One of your team members' phone numbers is already registered for this event.",
   DEFAULT: "Registration failed. Please try again or contact support."
 };
 
@@ -191,17 +193,25 @@ export default function RegistrationForm({
   
   // Handle form submission
   const onSubmit = useCallback(async (data) => {
-    if (isSubmitting) {
+    // Track state using local variables for safety
+    let isCurrentlySubmitting = isSubmitting;
+    let toastId = null;
+    
+    if (isCurrentlySubmitting) {
       return;
     }
     
+    // Set all the state we need to track the submit operation
     setIsSubmitting(true);
+    isCurrentlySubmitting = true;
     setServerError(null);
     
-    // Show loading toast
-    const toastId = toast.loading("Submitting registration...");
-    
+    // Wrap everything in a try-catch to ensure we reset isSubmitting state
+    // even if something unexpected happens
     try {
+      // Show loading toast
+      toastId = toast.loading("Submitting registration...");
+      
       // Update college field with custom college name if "Other" is selected
       if (data.mainParticipant.college === "Other" && data.mainParticipant.otherCollege) {
         data.mainParticipant.college = data.mainParticipant.otherCollege;
@@ -228,14 +238,23 @@ export default function RegistrationForm({
       console.log('Sending registration payload:', JSON.stringify(payload));
       
       // Send registration request
-      const response = await fetch('/api/techelonsregistration', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload),
-        cache: 'no-store'
-      });
+      let response;
+      try {
+        response = await fetch('/api/techelonsregistration', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload),
+          cache: 'no-store'
+        });
+      } catch (fetchError) {
+        console.error('Network error during fetch:', fetchError);
+        toast.error(ERROR_MESSAGES.CONNECTION_ERROR, { id: toastId });
+        setServerError(ERROR_MESSAGES.CONNECTION_ERROR);
+        setIsSubmitting(false);
+        return;
+      }
       
       // Safe parsing of response with error handling
       let result;
@@ -245,51 +264,88 @@ export default function RegistrationForm({
         console.error('Error parsing API response:', parseError);
         toast.error("Error processing server response", { id: toastId });
         setServerError("Server returned an invalid response. Please try again later.");
+        setIsSubmitting(false);
         return;
       }
       
-      console.log('API Response:', result);
+      // Log response for debugging (safely)
+      try {
+        console.log('API Response:', result);
+      } catch (logError) {
+        console.error('Error logging API response (non-critical)');
+      }
+      
+      // Check if response exists and has expected properties
+      if (!response) {
+        console.error('Response object is undefined or null');
+        toast.error(ERROR_MESSAGES.CONNECTION_ERROR, { id: toastId });
+        setServerError(ERROR_MESSAGES.CONNECTION_ERROR);
+        setIsSubmitting(false);
+        return;
+      }
       
       if (!response.ok) {
         // Get error message safely
         let errorMessage = "Registration failed";
         
-        if (result && result.error) {
-          errorMessage = result.error;
-        } else if (response.status === 429) {
-          errorMessage = "Too many requests. Please try again later.";
-        } else if (response.status >= 500) {
-          errorMessage = "Server error. Please try again later.";
-        } else if (response.status === 404) {
-          errorMessage = "API endpoint not found. Please contact support.";
+        try {
+          // Safely extract error message, with fallbacks
+          if (result && typeof result === 'object') {
+            if (typeof result.error === 'string') {
+              errorMessage = result.error;
+            } else if (typeof result.message === 'string') {
+              errorMessage = result.message;
+            }
+          }
+        } catch (extractError) {
+          // If extracting the error message fails, use default
+          console.log('Failed to extract error details from response');
         }
         
-        // Debug raw response and result
-        console.log('Raw response:', response);
-        console.log('Raw result:', result);
+        // Status code specific messages as fallbacks
+        if (errorMessage === "Registration failed") {
+          if (response.status === 429) {
+            errorMessage = "Too many requests. Please try again later.";
+          } else if (response.status >= 500) {
+            errorMessage = "Server error. Please try again later.";
+          } else if (response.status === 404) {
+            errorMessage = "API endpoint not found. Please contact support.";
+          }
+        }
         
-        // Log detailed error information
-        console.error('Registration API error:', {
-          status: response.status || 'No status available',
-          statusText: response.statusText || 'No status text available',
-          result: result || 'No result data available'
-        });
+        // Safer logging approach
+        try {
+          // Create a simplified error message string
+          const errorMsg = `Registration error: status=${response?.status || 'unknown'}, message=${result?.error || 'unknown error'}`;
+          console.log(errorMsg);
+        } catch (logError) {
+          // If even this fails, log a simple string
+          console.log('Error during registration - logging details failed');
+        }
         
-        // Check for specific error messages
-        if (errorMessage.includes("You cannot use the same email address") && errorMessage.includes("for multiple team members")) {
-          errorMessage = ERROR_MESSAGES.DUPLICATE_TEAM_EMAIL;
-        } else if (errorMessage.includes("You cannot use the same phone number") && errorMessage.includes("for multiple team members")) {
-          errorMessage = ERROR_MESSAGES.DUPLICATE_TEAM_PHONE;
-        } else if (errorMessage.includes("email address")) {
-          errorMessage = ERROR_MESSAGES.DUPLICATE_EMAIL;
-        } else if (errorMessage.includes("phone number")) {
-          errorMessage = ERROR_MESSAGES.DUPLICATE_PHONE;
-        } else if (errorMessage.includes("already registered")) {
-          errorMessage = ERROR_MESSAGES.DUPLICATE_EMAIL;
+        // Safely map error messages to user-friendly formats
+        try {
+          if (errorMessage.includes("You cannot use the same email address") && errorMessage.includes("for multiple team members")) {
+            errorMessage = ERROR_MESSAGES.DUPLICATE_TEAM_EMAIL;
+          } else if (errorMessage.includes("You cannot use the same phone number") && errorMessage.includes("for multiple team members")) {
+            errorMessage = ERROR_MESSAGES.DUPLICATE_TEAM_PHONE;
+          } else if (errorMessage.includes("email address") && errorMessage.includes("is already registered")) {
+            // Don't replace detailed messages about email registrations - display them as-is
+            // Just ensure they don't get mapped to generic messages
+          } else if (errorMessage.includes("phone number") && errorMessage.includes("is already registered")) {
+            // Don't replace detailed messages about phone registrations - display them as-is
+            // Just ensure they don't get mapped to generic messages
+          } else if (errorMessage.includes("already registered") && !errorMessage.includes("email address") && !errorMessage.includes("phone number")) {
+            errorMessage = ERROR_MESSAGES.DUPLICATE_EMAIL;
+          }
+        } catch (mappingError) {
+          // If error mapping fails, keep the original message
+          console.log('Error mapping error message');
         }
         
         setServerError(errorMessage);
         toast.error(errorMessage, { id: toastId });
+        setIsSubmitting(false);
         return;
       }
       
@@ -322,28 +378,37 @@ export default function RegistrationForm({
         window.location.href = redirectUrl;
       }, 1000);
     } catch (error) {
+      // This is our global error handler - it will catch any other exceptions
+      // that weren't caught by our more specific handlers above
       console.error("Registration form submission error:", error);
       
-      // Create a detailed error object
-      const errorDetails = {
-        message: error.message || 'Unknown error',
-        name: error.name || 'Error',
-        stack: error.stack || 'No stack trace available'
-      };
-      
-      // Log detailed error information
-      console.error("Detailed error information:", errorDetails);
-      
-      // Provide more detailed error information in the console
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        console.error("Network error - API endpoint might be unreachable");
-        toast.error("Network error. Please check your internet connection.", { id: toastId });
-        setServerError("Network error. Please check your internet connection.");
-      } else {
-        toast.error(ERROR_MESSAGES.CONNECTION_ERROR, { id: toastId });
-        setServerError(ERROR_MESSAGES.CONNECTION_ERROR);
+      try {
+        // Create a detailed error object with safe access to properties
+        const errorDetails = {
+          message: error?.message || 'Unknown error',
+          name: error?.name || 'Error',
+          stack: error?.stack || 'No stack trace available'
+        };
+        
+        // Log detailed error information
+        console.error("Detailed error information:", errorDetails);
+        
+        // Provide user-friendly error message
+        if (error?.name === 'TypeError' && error?.message?.includes('fetch')) {
+          console.error("Network error - API endpoint might be unreachable");
+          if (toastId) toast.error("Network error. Please check your internet connection.", { id: toastId });
+          setServerError("Network error. Please check your internet connection.");
+        } else {
+          if (toastId) toast.error(ERROR_MESSAGES.CONNECTION_ERROR, { id: toastId });
+          setServerError(ERROR_MESSAGES.CONNECTION_ERROR);
+        }
+      } catch (logError) {
+        // Ultimate fallback if even our error handling code fails
+        console.error("Error in error handler");
+        if (toastId) toast.error("An unexpected error occurred", { id: toastId });
       }
     } finally {
+      // Always reset the submitting state, even if there was an error
       setIsSubmitting(false);
     }
   }, [event, isSubmitting, isTeamEvent, setIsSubmitting, setServerError]);
