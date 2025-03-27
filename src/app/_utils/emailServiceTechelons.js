@@ -82,6 +82,7 @@ export async function sendTechelonsRegistrationEmail(registration, event, isTeam
         }
         .whatsapp {
           background-color: #25D366;
+          color: white;
         }
         h2 {
           color: #4f46e5;
