@@ -31,13 +31,18 @@ export default function EventSelection({ events, onSelectEvent, categories }) {
       </div>
 
       <Tabs defaultValue="all" onValueChange={setActiveCategory} className="w-full">
-        <TabsList className="flex flex-wrap w-full gap-1 mb-4 sm:mb-6">
-          <TabsTrigger value="all" className="text-xs sm:text-sm flex-1 min-w-20">All Events</TabsTrigger>
-          {uniqueCategories.map(category => (
+        <TabsList className="flex flex-wrap w-full gap-0.5 xs:gap-1 mb-4 sm:mb-6">
+          <TabsTrigger
+            value="all"
+            className="text-[10px] xxs:text-xs sm:text-sm flex-1 max-w-[calc(50%-2px)] xxs:max-w-[calc(33.333%-2px)] xs:max-w-none min-w-0 px-1.5 xxs:px-2 xs:px-3 py-1"
+          >
+            All Events
+          </TabsTrigger>
+          {uniqueCategories.map((category) => (
             <TabsTrigger
               key={category}
               value={category}
-              className="text-xs sm:text-sm flex-1 min-w-20 truncate"
+              className="text-[10px] xxs:text-xs sm:text-sm flex-1 max-w-[calc(50%-2px)] xxs:max-w-[calc(33.333%-2px)] xs:max-w-none min-w-0 px-1.5 xxs:px-2 xs:px-3 py-1 truncate"
             >
               {categories[category] || category}
             </TabsTrigger>
