@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, Save, PlusCircle, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import toast from "react-hot-toast";
 
 export default function TechelonsContentManagement() {
@@ -147,18 +148,16 @@ export default function TechelonsContentManagement() {
 
   // Remove about paragraph
   const removeParagraph = (index) => {
-    if (window.confirm("Are you sure you want to remove this paragraph? This action cannot be undone.")) {
-      setContent(prev => {
-        const newParagraphs = [...prev.aboutParagraphs];
-        newParagraphs.splice(index, 1);
-        return {
-          ...prev,
-          aboutParagraphs: newParagraphs
-        };
-      });
+    setContent(prev => {
+      const newParagraphs = [...prev.aboutParagraphs];
+      newParagraphs.splice(index, 1);
+      return {
+        ...prev,
+        aboutParagraphs: newParagraphs
+      };
+    });
 
-      toast.success("Paragraph removed successfully!");
-    }
+    toast.success("Paragraph removed successfully!");
   };
 
   // Move paragraph up
@@ -249,18 +248,16 @@ export default function TechelonsContentManagement() {
 
   // Remove feature
   const removeFeature = (index) => {
-    if (window.confirm("Are you sure you want to remove this feature? This action cannot be undone.")) {
-      setContent(prev => {
-        const newFeatures = [...prev.features];
-        newFeatures.splice(index, 1);
-        return {
-          ...prev,
-          features: newFeatures
-        };
-      });
+    setContent(prev => {
+      const newFeatures = [...prev.features];
+      newFeatures.splice(index, 1);
+      return {
+        ...prev,
+        features: newFeatures
+      };
+    });
 
-      toast.success("Feature removed successfully!");
-    }
+    toast.success("Feature removed successfully!");
   };
 
   // Move feature up
@@ -512,15 +509,30 @@ export default function TechelonsContentManagement() {
                           >
                             <ArrowDown className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeParagraph(index)}
-                            className="text-destructive h-8 w-8"
-                            aria-label="Remove paragraph"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive h-8 w-8"
+                                aria-label="Remove paragraph"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete the paragraph.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction className="bg-destructive hover:bg-destructive/90 text-white" onClick={() => removeParagraph(index)}>Delete</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </div>
                       <Textarea
@@ -589,15 +601,30 @@ export default function TechelonsContentManagement() {
                           >
                             <ArrowDown className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeFeature(index)}
-                            className="text-destructive h-8 w-8"
-                            aria-label="Remove feature"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive h-8 w-8"
+                                aria-label="Remove feature"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete this feature.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction className="bg-destructive hover:bg-destructive/90 text-white" onClick={() => removeFeature(index)}>Delete</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </div>
 

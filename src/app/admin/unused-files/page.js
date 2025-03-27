@@ -25,6 +25,16 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Loader2, Trash2, RefreshCw, Info, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
@@ -36,6 +46,7 @@ export default function UnusedFilesPage() {
   const [deleting, setDeleting] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
   const [totalFileCount, setTotalFileCount] = useState(0);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const fetchUnusedFiles = async () => {
     try {
@@ -94,10 +105,10 @@ export default function UnusedFilesPage() {
       return;
     }
     
-    if (!confirm(`Are you sure you want to delete ${selectedFiles.length} files? This action cannot be undone.`)) {
-      return;
-    }
-    
+    setShowDeleteDialog(true);
+  };
+  
+  const confirmDelete = async () => {
     try {
       setDeleting(true);
       
@@ -125,6 +136,7 @@ export default function UnusedFilesPage() {
       toast.error("Failed to delete files");
     } finally {
       setDeleting(false);
+      setShowDeleteDialog(false);
     }
   };
   
@@ -176,6 +188,35 @@ export default function UnusedFilesPage() {
           )}
         </Button>
       </div>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to delete {selectedFiles.length} files. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete} 
+              disabled={deleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Files"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       
       {/* Info Alert */}
       <Alert>
@@ -279,7 +320,7 @@ export default function UnusedFilesPage() {
                             variant="ghost" 
                             size="icon"
                             title="View file"
-                            className="h-8 w-8"
+                            className="h-8 w-8 text-primary"
                             onClick={() => window.open(`/api/files/${file._id}`, '_blank')}
                           >
                             <Info className="h-4 w-4" />
@@ -300,7 +341,7 @@ export default function UnusedFilesPage() {
               <Button 
                 variant="link" 
                 onClick={() => setShowDebug(!showDebug)}
-                className="px-0 h-auto text-xs sm:text-sm"
+                className="px-0 h-auto text-xs sm:text-sm text-muted-foreground hover:text-primary"
               >
                 {showDebug ? "Hide Debug Info" : "Show Debug Info"}
               </Button>

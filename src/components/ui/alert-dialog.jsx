@@ -109,7 +109,7 @@ function AlertDialogAction({
   className,
   ...props
 }) {
-  return (<AlertDialogPrimitive.Action className={cn(buttonVariants(), className)} {...props} />);
+  return (<AlertDialogPrimitive.Action className={cn(buttonVariants(), "bg-red-600 text-white hover:bg-red-700", className)} {...props} />);
 }
 
 function AlertDialogCancel({

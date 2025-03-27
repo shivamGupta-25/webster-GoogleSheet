@@ -12,11 +12,27 @@ import { Loader2, Save, PlusCircle, ArrowUp, ArrowDown, Trash2 } from "lucide-re
 import toast from "react-hot-toast";
 import Image from "next/image";
 import { ImageUpload } from "@/components/ui/image-upload";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function ContentManagement() {
   const [content, setContent] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Alert Dialog states
+  const [alertDialogOpen, setAlertDialogOpen] = useState(false);
+  const [alertDialogAction, setAlertDialogAction] = useState(null);
+  const [alertDialogTitle, setAlertDialogTitle] = useState("");
+  const [alertDialogDescription, setAlertDialogDescription] = useState("");
   
   const [newMember, setNewMember] = useState({
     name: "",
@@ -125,7 +141,9 @@ export default function ContentManagement() {
   };
 
   const removeParagraph = (index) => {
-    if (window.confirm("Are you sure you want to remove this paragraph? This action cannot be undone.")) {
+    setAlertDialogTitle("Remove Paragraph");
+    setAlertDialogDescription("Are you sure you want to remove this paragraph? This action cannot be undone.");
+    setAlertDialogAction(() => () => {
       setContent((prevContent) => {
         const newParagraphs = [...prevContent.about.paragraphs];
         newParagraphs.splice(index, 1);
@@ -139,7 +157,8 @@ export default function ContentManagement() {
       });
       
       toast.success("Paragraph removed successfully!");
-    }
+    });
+    setAlertDialogOpen(true);
   };
 
   const moveParagraphUp = (index) => {
@@ -226,7 +245,9 @@ export default function ContentManagement() {
   };
 
   const removeCouncilMember = (index) => {
-    if (window.confirm("Are you sure you want to remove this council member? This action cannot be undone.")) {
+    setAlertDialogTitle("Remove Council Member");
+    setAlertDialogDescription("Are you sure you want to remove this council member? This action cannot be undone.");
+    setAlertDialogAction(() => () => {
       setContent((prevContent) => {
         const newMembers = [...prevContent.council.members];
         newMembers.splice(index, 1);
@@ -240,7 +261,8 @@ export default function ContentManagement() {
       });
       
       toast.success("Council member removed successfully!");
-    }
+    });
+    setAlertDialogOpen(true);
   };
 
   const handleCouncilMemberChange = (index, field, value) => {
@@ -328,7 +350,9 @@ export default function ContentManagement() {
   };
 
   const removeEvent = (index) => {
-    if (window.confirm("Are you sure you want to remove this event? This action cannot be undone.")) {
+    setAlertDialogTitle("Remove Event");
+    setAlertDialogDescription("Are you sure you want to remove this event? This action cannot be undone.");
+    setAlertDialogAction(() => () => {
       setContent((prevContent) => {
         const newEvents = [...prevContent.pastEvents.events];
         newEvents.splice(index, 1);
@@ -342,7 +366,8 @@ export default function ContentManagement() {
       });
       
       toast.success("Event removed successfully!");
-    }
+    });
+    setAlertDialogOpen(true);
   };
 
   const saveContent = async () => {
@@ -395,6 +420,22 @@ export default function ContentManagement() {
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
+      {/* Alert Dialog */}
+      <AlertDialog open={alertDialogOpen} onOpenChange={setAlertDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{alertDialogTitle}</AlertDialogTitle>
+            <AlertDialogDescription>{alertDialogDescription}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (alertDialogAction) alertDialogAction();
+            }}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Content Management</h1>
