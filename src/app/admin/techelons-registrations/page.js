@@ -25,6 +25,16 @@ import {
   DialogHeader, 
   DialogTitle 
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -36,8 +46,8 @@ export default function TechelonsRegistrationsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedRegistration, setSelectedRegistration] = useState(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showFlushDialog, setShowFlushDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showFlushDialog, setShowFlushDialog] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [filteredRegistrations, setFilteredRegistrations] = useState([]);
 
@@ -287,55 +297,57 @@ export default function TechelonsRegistrationsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Flush Confirmation Dialog */}
-      <Dialog open={showFlushDialog} onOpenChange={setShowFlushDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Flush All Registrations</DialogTitle>
-            <DialogDescription>
+      {/* Flush Confirmation Alert Dialog */}
+      <AlertDialog open={showFlushDialog} onOpenChange={setShowFlushDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Flush All Registrations</AlertDialogTitle>
+            <AlertDialogDescription>
               Are you sure you want to delete ALL registrations? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
           <div className="py-4">
             <p className="text-destructive font-semibold">
               This will permanently delete all {registrations.length} registrations.
             </p>
           </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowFlushDialog(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
               onClick={flushAllRegistrations}
+              className="bg-destructive hover:bg-destructive/90"
             >
               Delete All
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Registration Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden sm:max-w-[95%] lg:max-w-[85%] xl:max-w-[75%] w-full">
           <DialogHeader>
             <DialogTitle>Registration Details</DialogTitle>
           </DialogHeader>
           {selectedRegistration && (
-            <ScrollArea className="max-h-[70vh]">
+            <ScrollArea className="max-h-[calc(90vh-8rem)] pr-4">
               <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <h3 className="text-lg font-semibold mb-2">Event Information</h3>
                     <div className="space-y-2">
                       <p><strong>Event ID:</strong> {selectedRegistration.eventId}</p>
                       <p><strong>Event Name:</strong> {selectedRegistration.eventName}</p>
                       <p><strong>Registration Date:</strong> {formatDate(selectedRegistration.registrationDate)}</p>
+                      <p><strong>Team Event:</strong> {selectedRegistration.isTeamEvent ? 'Yes' : 'No'}</p>
                       {selectedRegistration.isTeamEvent && (
                         <p><strong>Team Name:</strong> {selectedRegistration.teamName || 'N/A'}</p>
+                      )}
+                      {selectedRegistration.createdAt && (
+                        <p><strong>Created At:</strong> {formatDate(selectedRegistration.createdAt)}</p>
+                      )}
+                      {selectedRegistration.updatedAt && (
+                        <p><strong>Updated At:</strong> {formatDate(selectedRegistration.updatedAt)}</p>
                       )}
                     </div>
                   </div>
@@ -349,6 +361,9 @@ export default function TechelonsRegistrationsPage() {
                       <p><strong>Course:</strong> {selectedRegistration.mainParticipant.course}</p>
                       <p><strong>Year:</strong> {selectedRegistration.mainParticipant.year}</p>
                       <p><strong>College:</strong> {selectedRegistration.mainParticipant.college}</p>
+                      {selectedRegistration.mainParticipant.otherCollege && (
+                        <p><strong>Other College:</strong> {selectedRegistration.mainParticipant.otherCollege}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -356,37 +371,43 @@ export default function TechelonsRegistrationsPage() {
                 {selectedRegistration.teamMembers && selectedRegistration.teamMembers.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold mb-2">Team Members</h3>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Phone</TableHead>
-                          <TableHead>Roll No</TableHead>
-                          <TableHead>Course</TableHead>
-                          <TableHead>Year</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {selectedRegistration.teamMembers.map((member, index) => (
-                          <TableRow key={index}>
-                            <TableCell>{member.name}</TableCell>
-                            <TableCell>{member.email}</TableCell>
-                            <TableCell>{member.phone}</TableCell>
-                            <TableCell>{member.rollNo}</TableCell>
-                            <TableCell>{member.course}</TableCell>
-                            <TableCell>{member.year}</TableCell>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Phone</TableHead>
+                            <TableHead>Roll No</TableHead>
+                            <TableHead>Course</TableHead>
+                            <TableHead>Year</TableHead>
+                            <TableHead>College</TableHead>
+                            <TableHead>Other College</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {selectedRegistration.teamMembers.map((member, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{member.name}</TableCell>
+                              <TableCell>{member.email}</TableCell>
+                              <TableCell>{member.phone}</TableCell>
+                              <TableCell>{member.rollNo}</TableCell>
+                              <TableCell>{member.course}</TableCell>
+                              <TableCell>{member.year}</TableCell>
+                              <TableCell>{member.college}</TableCell>
+                              <TableCell>{member.otherCollege || '-'}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
                 )}
 
                 {selectedRegistration.query && (
                   <div>
                     <h3 className="text-lg font-semibold mb-2">Query</h3>
-                    <p>{selectedRegistration.query}</p>
+                    <p className="break-words">{selectedRegistration.query}</p>
                   </div>
                 )}
 
@@ -397,10 +418,18 @@ export default function TechelonsRegistrationsPage() {
                       href={selectedRegistration.collegeIdUrl} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
+                      className="text-blue-600 hover:underline flex items-center gap-2"
                     >
-                      View College ID
+                      <span>View College ID</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-external-link"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                     </a>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Record Information</h3>
+                  <div className="space-y-2">
+                    <p><strong>ID:</strong> {selectedRegistration._id}</p>
                   </div>
                 </div>
               </div>

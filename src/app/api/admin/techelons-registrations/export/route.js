@@ -17,6 +17,7 @@ function convertToCSV(registrations) {
     'Main Participant Course',
     'Main Participant Year',
     'Main Participant College',
+    'College ID URL',
     'Team Members',
     'Query'
   ];
@@ -45,6 +46,7 @@ function convertToCSV(registrations) {
       reg.mainParticipant.course,
       reg.mainParticipant.year,
       reg.mainParticipant.college,
+      reg.collegeIdUrl?.startsWith('/api/files') ? `http://websters-shivaji.vercel.app${reg.collegeIdUrl}` : (reg.collegeIdUrl || 'N/A'),
       teamMembers,
       reg.query || 'N/A'
     ];

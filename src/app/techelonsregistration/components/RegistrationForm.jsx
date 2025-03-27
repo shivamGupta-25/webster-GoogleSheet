@@ -66,6 +66,8 @@ const ERROR_MESSAGES = {
   CONNECTION_ERROR: "Connection error. Please check your internet connection and try again.",
   DUPLICATE_EMAIL: "This email address is already registered for this event.",
   DUPLICATE_PHONE: "This phone number is already registered for this event.",
+  DUPLICATE_TEAM_EMAIL: "You cannot use the same email address for multiple team members. Each team member must have a unique email.",
+  DUPLICATE_TEAM_PHONE: "You cannot use the same phone number for multiple team members. Each team member must have a unique phone number.",
   DEFAULT: "Registration failed. Please try again or contact support."
 };
 
@@ -197,7 +199,7 @@ export default function RegistrationForm({
     setServerError(null);
     
     // Show loading toast
-    const toastId = toast.loading("Submitting your registration...");
+    const toastId = toast.loading("Submitting registration...");
     
     try {
       // Update college field with custom college name if "Other" is selected
@@ -235,22 +237,50 @@ export default function RegistrationForm({
         cache: 'no-store'
       });
       
-      const result = await response.json();
+      // Safe parsing of response with error handling
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        console.error('Error parsing API response:', parseError);
+        toast.error("Error processing server response", { id: toastId });
+        setServerError("Server returned an invalid response. Please try again later.");
+        return;
+      }
       
       console.log('API Response:', result);
       
       if (!response.ok) {
-        let errorMessage = result.error || ERROR_MESSAGES.DEFAULT;
+        // Get error message safely
+        let errorMessage = "Registration failed";
+        
+        if (result && result.error) {
+          errorMessage = result.error;
+        } else if (response.status === 429) {
+          errorMessage = "Too many requests. Please try again later.";
+        } else if (response.status >= 500) {
+          errorMessage = "Server error. Please try again later.";
+        } else if (response.status === 404) {
+          errorMessage = "API endpoint not found. Please contact support.";
+        }
+        
+        // Debug raw response and result
+        console.log('Raw response:', response);
+        console.log('Raw result:', result);
         
         // Log detailed error information
         console.error('Registration API error:', {
-          status: response.status,
-          statusText: response.statusText,
-          result
+          status: response.status || 'No status available',
+          statusText: response.statusText || 'No status text available',
+          result: result || 'No result data available'
         });
         
         // Check for specific error messages
-        if (errorMessage.includes("email address")) {
+        if (errorMessage.includes("You cannot use the same email address") && errorMessage.includes("for multiple team members")) {
+          errorMessage = ERROR_MESSAGES.DUPLICATE_TEAM_EMAIL;
+        } else if (errorMessage.includes("You cannot use the same phone number") && errorMessage.includes("for multiple team members")) {
+          errorMessage = ERROR_MESSAGES.DUPLICATE_TEAM_PHONE;
+        } else if (errorMessage.includes("email address")) {
           errorMessage = ERROR_MESSAGES.DUPLICATE_EMAIL;
         } else if (errorMessage.includes("phone number")) {
           errorMessage = ERROR_MESSAGES.DUPLICATE_PHONE;
@@ -292,7 +322,17 @@ export default function RegistrationForm({
         window.location.href = redirectUrl;
       }, 1000);
     } catch (error) {
-      console.error("Registration error:", error);
+      console.error("Registration form submission error:", error);
+      
+      // Create a detailed error object
+      const errorDetails = {
+        message: error.message || 'Unknown error',
+        name: error.name || 'Error',
+        stack: error.stack || 'No stack trace available'
+      };
+      
+      // Log detailed error information
+      console.error("Detailed error information:", errorDetails);
       
       // Provide more detailed error information in the console
       if (error.name === 'TypeError' && error.message.includes('fetch')) {

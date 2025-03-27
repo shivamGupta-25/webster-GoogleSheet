@@ -160,13 +160,13 @@ export async function POST(request) {
         
         if (emails.has(email)) {
           return NextResponse.json({ 
-            error: `Duplicate email address: ${email}` 
+            error: `You cannot use the same email address (${email}) for multiple team members. Each team member must have a unique email address.` 
           }, { status: 400 });
         }
         
         if (phones.has(phone)) {
           return NextResponse.json({ 
-            error: `Duplicate phone number: ${phone}` 
+            error: `You cannot use the same phone number (${phone}) for multiple team members. Each team member must have a unique phone number.` 
           }, { status: 400 });
         }
         

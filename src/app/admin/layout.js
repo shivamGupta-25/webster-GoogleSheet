@@ -70,6 +70,7 @@ export default function AdminLayout({ children }) {
     { name: "Techelons", href: "/admin/techelons", icon: Users },
     { name: "Techelons Content", href: "/admin/techelons-content", icon: FileText },
     { name: "Techelons Registrations", href: "/admin/techelons-registrations", icon: Users },
+    { name: "Unused Files", href: "/admin/unused-files", icon: FileText },
   ];
 
   const handleLogout = async () => {
