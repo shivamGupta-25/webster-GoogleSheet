@@ -6,7 +6,8 @@ import { Dialog } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import { useRouter, usePathname } from "next/navigation";
-import { fetchTechelonsData, fetchSiteContent } from "@/lib/utils";
+import { isRegistrationOpen } from "@/app/_data/techelonsEventsData";
+import workshopData from "@/app/_data/workshopData";
 
 // Animation configurations
 const animations = {
@@ -110,76 +111,9 @@ const HeaderFallback = () => (
 // Main component that uses usePathname
 const HeaderContent = ({ children }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [techelonsRegistrationEnabled, setTechelonsRegistrationEnabled] = useState(false);
-    const [workshopRegistrationOpen, setWorkshopRegistrationOpen] = useState(false);
     const router = useRouter();
     const pathname = usePathname();
     const isHomePage = pathname === '/';
-
-    // Fetch Techelons and Workshop registration status on component mount
-    useEffect(() => {
-        const getRegistrationStatus = async () => {
-            try {
-                // Fetch Techelons data
-                const techelonsData = await fetchTechelonsData();
-                console.log("DEBUG - Techelons Data:", techelonsData);
-                
-                if (techelonsData && techelonsData.festInfo) {
-                    console.log("DEBUG - Techelons festInfo:", techelonsData.festInfo);
-                    console.log("DEBUG - Registration enabled:", techelonsData.festInfo.registrationEnabled);
-                    setTechelonsRegistrationEnabled(techelonsData.festInfo.registrationEnabled);
-                } else {
-                    console.log("DEBUG - No festInfo in techelonsData or techelonsData is null");
-                }
-                
-                // Fetch Site content for workshop data
-                const siteContent = await fetchSiteContent();
-                console.log("DEBUG - Site Content:", siteContent);
-                
-                if (siteContent && siteContent.workshop) {
-                    console.log("DEBUG - Workshop data:", siteContent.workshop);
-                    console.log("DEBUG - Workshop registration open:", siteContent.workshop.isRegistrationOpen);
-                    setWorkshopRegistrationOpen(siteContent.workshop.isRegistrationOpen);
-                } else {
-                    console.log("DEBUG - No workshop in siteContent or siteContent is null");
-                }
-            } catch (error) {
-                console.error("Error fetching registration status:", error);
-                setTechelonsRegistrationEnabled(false);
-                setWorkshopRegistrationOpen(false);
-            }
-        };
-        
-        getRegistrationStatus();
-    }, []);
-
-    // Periodically refresh registration status
-    useEffect(() => {
-        // Don't refresh on admin pages to avoid conflicts with admin operations
-        if (pathname.startsWith('/admin')) {
-            return;
-        }
-        
-        const refreshInterval = setInterval(async () => {
-            try {
-                // Fetch Techelons data
-                const techelonsData = await fetchTechelonsData();
-                if (techelonsData && techelonsData.festInfo) {
-                    setTechelonsRegistrationEnabled(techelonsData.festInfo.registrationEnabled);
-                }
-                
-                // Fetch Site content for workshop data
-                const siteContent = await fetchSiteContent();
-                if (siteContent && siteContent.workshop) {
-                    setWorkshopRegistrationOpen(siteContent.workshop.isRegistrationOpen);
-                }
-            } catch (error) {
-                console.error("Error refreshing registration status:", error);
-            }
-        }, 60000); // Refresh every minute
-        
-        return () => clearInterval(refreshInterval);
-    }, [pathname]);
 
     // Scroll to section with element checking - optimized for performance
     const scrollToSection = useCallback((sectionId) => {
@@ -187,19 +121,16 @@ const HeaderContent = ({ children }) => {
 
         const element = document.getElementById(sectionId);
         if (element) {
-            // Calculate element position directly using element.offsetTop
-            // This is more reliable than getBoundingClientRect when page is still loading
-            const offset = 20; // Visual offset
-            const y = element.offsetTop - offset;
+            // Use a more reliable scrolling method for mobile with optimized performance
+            const y = element.getBoundingClientRect().top + window.scrollY;
             
-            // Use scrollTo with a delay to ensure the page has fully rendered
-            setTimeout(() => {
+            // Use requestAnimationFrame for smoother scrolling
+            requestAnimationFrame(() => {
                 window.scrollTo({
                     top: y,
                     behavior: 'smooth'
                 });
-            }, 50);
-            
+            });
             return true;
         }
 
@@ -226,11 +157,10 @@ const HeaderContent = ({ children }) => {
                 sessionStorage.setItem('scrollTarget', sectionId);
                 router.push('/');
             } else {
-                // Already on home page, scroll directly with a short delay
-                // to ensure proper element positioning
-                setTimeout(() => {
+                // Already on home page, scroll directly
+                requestAnimationFrame(() => {
                     scrollToSection(sectionId);
-                }, 50);
+                });
             }
         } else {
             // Standard navigation
@@ -241,38 +171,24 @@ const HeaderContent = ({ children }) => {
     // Navigation to registration page
     const handleExit = useCallback(() => {
         // Check if techelons registration is open
-        const isTechelonsOpen = techelonsRegistrationEnabled === true;
+        const techelonsRegistrationOpen = isRegistrationOpen();
         // Check if workshop registration is open
-        const isWorkshopOpen = workshopRegistrationOpen === true;
-        
-        // Add more detailed logging
-        console.log("DEBUG - Registration Status:");
-        console.log("techelonsRegistrationEnabled:", techelonsRegistrationEnabled);
-        console.log("techelonsRegistrationEnabled type:", typeof techelonsRegistrationEnabled);
-        console.log("workshopRegistrationOpen:", workshopRegistrationOpen);
-        console.log("workshopRegistrationOpen type:", typeof workshopRegistrationOpen);
-        console.log("isTechelonsOpen (after conversion):", isTechelonsOpen);
-        console.log("isWorkshopOpen (after conversion):", isWorkshopOpen);
-        console.log("Both registrations open?", isTechelonsOpen && isWorkshopOpen);
+        const workshopRegistrationOpen = workshopData.isRegistrationOpen;
 
-        if (isTechelonsOpen && isWorkshopOpen) {
+        if (techelonsRegistrationOpen && workshopRegistrationOpen) {
             // Both registrations are open, show a dialog or redirect to a page that lets the user choose
-            console.log("DEBUG - Redirecting to register-options");
             router.push("/register-options");
-        } else if (isTechelonsOpen) {
+        } else if (techelonsRegistrationOpen) {
             // Only techelons registration is open
-            console.log("DEBUG - Redirecting to techelonsregistration");
             router.push("/techelonsregistration");
-        } else if (isWorkshopOpen) {
+        } else if (workshopRegistrationOpen) {
             // Only workshop registration is open
-            console.log("DEBUG - Redirecting to workshopregistration");
             router.push("/workshopregistration");
         } else {
             // No registrations are open
-            console.log("DEBUG - Redirecting to registrationclosed");
             router.push("/registrationclosed");
         }
-    }, [router, techelonsRegistrationEnabled, workshopRegistrationOpen]);
+    }, [router]);
 
     // Handle section scrolling on page load - optimized
     useEffect(() => {
@@ -288,30 +204,24 @@ const HeaderContent = ({ children }) => {
         pendingScrollTarget = null;
         sessionStorage.removeItem('scrollTarget');
 
-        // Give more time for the page to fully load and render
-        // This ensures all elements have their final dimensions and positions
-        const initialDelay = 300;
-        
-        setTimeout(() => {
-            // Try scrolling directly first
-            if (scrollToSection(targetId)) return;
-            
-            // If first attempt fails, use polling as a fallback
-            let attempts = 0;
-            const maxAttempts = SCROLL_MAX_ATTEMPTS;
-            
-            const attemptScroll = () => {
-                attempts++;
-                if (scrollToSection(targetId) || attempts >= maxAttempts) {
-                    return;
-                }
-                
+        // Improved polling mechanism with better performance
+        let attempts = 0;
+
+        const attemptScroll = () => {
+            attempts++;
+            if (scrollToSection(targetId) || attempts >= SCROLL_MAX_ATTEMPTS) {
+                return;
+            }
+
+            // Use requestAnimationFrame for smoother performance
+            requestAnimationFrame(() => {
                 setTimeout(attemptScroll, SCROLL_CHECK_INTERVAL);
-            };
-            
-            attemptScroll();
-        }, initialDelay);
-        
+            });
+        };
+
+        // Start scrolling sooner
+        requestAnimationFrame(attemptScroll);
+
     }, [isHomePage, scrollToSection]);
 
     // Lock body scroll when mobile menu is open

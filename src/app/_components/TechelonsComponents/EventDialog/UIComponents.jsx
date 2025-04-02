@@ -1,8 +1,8 @@
-import { memo, useState, useEffect } from "react";
+import { memo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { ICON_MAP, STATUS_CONFIG } from "./constants";
-import { getEffectiveRegistrationStatus } from "./utils";
+import { getEffectiveRegistrationStatus } from "@/app/_data/techelonsEventsData";
 
 // UI Components
 export const SectionHeading = memo(({ icon, children }) => (
@@ -49,27 +49,8 @@ export const InfoCard = memo(({ icon, title, children, className }) => (
 InfoCard.displayName = "InfoCard";
 
 // Registration status component
-export const RegistrationStatus = memo(({ status, event }) => {
-  const [effectiveStatus, setEffectiveStatus] = useState(status || "loading");
-  
-  useEffect(() => {
-    const fetchStatus = async () => {
-      if (event) {
-        try {
-          const result = await getEffectiveRegistrationStatus(event);
-          setEffectiveStatus(result);
-        } catch (error) {
-          console.error('Error fetching registration status:', error);
-          setEffectiveStatus('closed');
-        }
-      } else {
-        setEffectiveStatus(status || 'closed');
-      }
-    };
-    
-    fetchStatus();
-  }, [event, status]);
-  
+export const RegistrationStatus = memo(({ status }) => {
+  const effectiveStatus = getEffectiveRegistrationStatus(status);
   const config = STATUS_CONFIG[effectiveStatus] || STATUS_CONFIG.closed;
 
   return (

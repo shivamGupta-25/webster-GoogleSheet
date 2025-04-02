@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,11 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "react-hot-toast";
+import { toast, Toaster } from "react-hot-toast";
 import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { fetchSiteContent } from '@/lib/utils';
-import { Skeleton } from "@/components/ui/skeleton";
+import workshopData from "@/app/_data/workshopData";
 
 // Email validation schema
 const emailSchema = z.string()
@@ -38,7 +37,6 @@ const emailSchema = z.string()
         "Please use your official institutional email address"
     );
 
-// Form validation schema
 const formSchema = z.object({
     email: emailSchema,
     name: z.string().min(2, "Name is required"),
@@ -54,7 +52,7 @@ const formSchema = z.object({
     query: z.string().optional(),
 });
 
-// Form field configuration
+// Form field configuration - memoized to prevent unnecessary re-renders
 const formFields = [
     { name: "email", placeholder: "Email", type: "email" },
     { name: "name", placeholder: "Full Name", type: "text" },
@@ -78,61 +76,25 @@ const TOAST_OPTIONS = {
     loading: { duration: Infinity, style: { background: '#3B82F6', color: 'white' } }
 };
 
-export default function WorkshopRegistrationPage() {
+export default function RegistrationPage() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [serverError, setServerError] = useState(null);
     const [isOnline, setIsOnline] = useState(true);
-    const [workshopData, setWorkshopData] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
     
-    // Fetch workshop data
-    useEffect(() => {
-        const loadContent = async () => {
-            try {
-                const content = await fetchSiteContent();
-                if (content && content.workshop) {
-                    setWorkshopData(content.workshop);
-                } else {
-                    // If workshop data is not found, try to set it up
-                    try {
-                        // In the browser, we need to use the API endpoint
-                        const setupResponse = await fetch('/api/workshop/setup');
-                        if (setupResponse.ok) {
-                            const setupData = await setupResponse.json();
-                            if (setupData.data) {
-                                setWorkshopData(setupData.data);
-                            } else {
-                                setServerError('Failed to set up workshop data. Please try again later.');
-                            }
-                        } else {
-                            setServerError('Failed to set up workshop data. Please try again later.');
-                        }
-                    } catch (setupError) {
-                        console.error('Error setting up workshop data:', setupError);
-                        setServerError('Failed to set up workshop data. Please try again later.');
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading workshop data:', error);
-                setServerError('Failed to load workshop data. Please try again later.');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        
-        loadContent();
-    }, []);
+    // Memoize workshop title to prevent unnecessary re-renders
+    const workshopTitle = useMemo(() => workshopData.title, []);
 
     // Redirect if registration is closed
     useEffect(() => {
-        if (!isLoading && workshopData && !workshopData.isRegistrationOpen) {
+        if (!workshopData.isRegistrationOpen) {
             router.push('/registrationclosed');
         }
-    }, [router, workshopData, isLoading]);
+    }, [router]);
 
-    // Handle online status
+    // Handle online status with useEffect to avoid hydration mismatch
     useEffect(() => {
+        // Update online status after component mounts
         setIsOnline(navigator.onLine);
         
         const handleOnline = () => setIsOnline(true);
@@ -159,7 +121,7 @@ export default function WorkshopRegistrationPage() {
         mode: "onChange"
     });
 
-    // Handle form submission
+    // Handle form submission with optimized fetch
     const handleRegistration = useCallback(async (data) => {
         if (isSubmitting || !isOnline) {
             if (!isOnline) toast.error(ERROR_MESSAGES.CONNECTION_ERROR);
@@ -173,73 +135,120 @@ export default function WorkshopRegistrationPage() {
         const toastId = toast.loading("Submitting your registration...");
         
         try {
-            // Optimize payload size by removing unnecessary whitespace
-            const payload = {
-                ...data,
-                college: "Shivaji College",
-                email: data.email.trim(),
-                name: data.name.trim(),
-                rollNo: data.rollNo.trim(),
-                course: data.course.trim(),
-                phone: data.phone.trim(),
-                query: data.query?.trim() || ""
-            };
+            // Implement retry logic with exponential backoff
+            const maxRetries = 3;
+            let retryCount = 0;
+            let success = false;
             
-            const response = await fetch('/api/workshop/register', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload),
-                cache: 'no-store'
-            });
+            while (retryCount < maxRetries && !success) {
+                try {
+                    // Increase timeout for each retry attempt
+                    const timeout = 8000 + (retryCount * 4000);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), timeout);
+                    
+                    // Optimize payload size by removing unnecessary whitespace
+                    const payload = {
+                        ...data,
+                        college: "Shivaji College",
+                        email: data.email.trim(),
+                        name: data.name.trim(),
+                        rollNo: data.rollNo.trim(),
+                        course: data.course.trim(),
+                        phone: data.phone.trim(),
+                        query: data.query?.trim() || ""
+                    };
+                    
+                    // Add retry attempt to headers for server-side logging
+                    const response = await fetch('/api/workshopregistration', {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-Retry-Count': retryCount.toString()
+                        },
+                        body: JSON.stringify(payload),
+                        signal: controller.signal,
+                        // Add cache control to prevent caching of POST requests
+                        cache: 'no-store'
+                    });
 
-            const result = await response.json();
-            
-            if (!response.ok) {
-                let errorMessage = result.error || ERROR_MESSAGES.DEFAULT;
-                
-                if (errorMessage.includes("already registered with this email")) {
-                    errorMessage = ERROR_MESSAGES.DUPLICATE_EMAIL;
-                } else if (errorMessage.includes("phone number is already registered")) {
-                    errorMessage = ERROR_MESSAGES.DUPLICATE_PHONE;
+                    clearTimeout(timeoutId);
+                    const result = await response.json();
+                    
+                    if (!response.ok) {
+                        let errorMessage = result.error || ERROR_MESSAGES.DEFAULT;
+                        
+                        if (errorMessage.includes("already registered with this email")) {
+                            errorMessage = ERROR_MESSAGES.DUPLICATE_EMAIL;
+                        } else if (errorMessage.includes("phone number is already registered")) {
+                            errorMessage = ERROR_MESSAGES.DUPLICATE_PHONE;
+                        }
+                        
+                        setServerError(errorMessage);
+                        toast.error(errorMessage, { id: toastId });
+                        return;
+                    }
+
+                    // Check if user is already registered
+                    if (result.alreadyRegistered) {
+                        toast.success("You are already registered! Redirecting...", { id: toastId });
+                        
+                        // Redirect to the form submission page
+                        setTimeout(() => {
+                            const redirectUrl = `${workshopData.formSubmittedLink}?token=${encodeURIComponent(result.registrationToken)}&alreadyRegistered=true`;
+                            window.location.href = redirectUrl;
+                        }, 500);
+                        return;
+                    }
+
+                    // Handle success for new registrations
+                    toast.success("Registration successful! Redirecting...", { id: toastId });
+                    reset();
+                    
+                    // Ensure redirection happens with a slight delay and proper URL
+                    setTimeout(() => {
+                        const redirectUrl = `${workshopData.formSubmittedLink}?token=${encodeURIComponent(result.registrationToken)}`;
+                        window.location.href = redirectUrl;
+                    }, 500);
+                    
+                    success = true;
+                    break;
+                } catch (fetchError) {
+                    if (fetchError.name === 'AbortError') {
+                        // Only retry on timeout errors
+                        retryCount++;
+                        
+                        if (retryCount < maxRetries) {
+                            // Update toast to show retry attempt
+                            toast.loading(`Request timed out. Retrying (${retryCount}/${maxRetries})...`, { id: toastId });
+                            // Add a small delay before retrying
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                        } else {
+                            const errorMessage = "Request timed out after multiple attempts. Please try again later.";
+                            setServerError(errorMessage);
+                            toast.error(errorMessage, { id: toastId });
+                        }
+                    } else {
+                        // For non-timeout errors, don't retry
+                        const errorMessage = ERROR_MESSAGES.CONNECTION_ERROR;
+                        setServerError(errorMessage);
+                        toast.error(errorMessage, { id: toastId });
+                        break;
+                    }
                 }
-                
-                setServerError(errorMessage);
-                toast.error(errorMessage, { id: toastId });
-                return;
             }
-
-            // Check if user is already registered
-            if (result.alreadyRegistered) {
-                toast.success("You are already registered! Redirecting...", { id: toastId });
-                
-                // Redirect to the form submission page
-                setTimeout(() => {
-                    router.push(`/formsubmitted/workshop?token=${encodeURIComponent(result.registrationToken)}&alreadyRegistered=true`);
-                }, 500);
-                return;
-            }
-
-            // Handle success for new registrations
-            toast.success("Registration successful! Redirecting...", { id: toastId });
-            reset();
-            
-            // Redirect to success page
-            setTimeout(() => {
-                router.push(`/formsubmitted/workshop?token=${encodeURIComponent(result.registrationToken)}`);
-            }, 500);
         } catch (error) {
             console.error("Registration error:", error);
-            toast.error(ERROR_MESSAGES.CONNECTION_ERROR, { id: toastId });
-            setServerError(ERROR_MESSAGES.CONNECTION_ERROR);
+            toast.error(ERROR_MESSAGES.DEFAULT, { id: toastId });
         } finally {
             setIsSubmitting(false);
         }
-    }, [isSubmitting, isOnline, reset, router]);
+    }, [isSubmitting, isOnline, reset]);
 
     return (
         <main className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+            <Toaster position="top-center" toastOptions={TOAST_OPTIONS} />
+            
             <div className="max-w-lg mx-auto">
                 {!isOnline && (
                     <Alert variant="destructive" className="mb-4">
@@ -258,101 +267,83 @@ export default function WorkshopRegistrationPage() {
                         </Alert>
                     )}
 
-                    {isLoading ? (
-                        <div className="space-y-6">
-                            <Skeleton className="h-10 w-full rounded-md" />
-                            {[...Array(5)].map((_, i) => (
-                                <Skeleton key={i} className="h-10 w-full rounded-md" />
-                            ))}
-                            <Skeleton className="h-24 w-full rounded-md" />
-                            <Skeleton className="h-10 w-full rounded-md" />
+                    <form onSubmit={handleSubmit(handleRegistration)} className="space-y-6">
+                        <div className="flex item-center justify-center px-3 py-2 border border-gray-300 rounded-md shadow-sm font-bold text-gray-700 text-lg">
+                            {workshopTitle}
                         </div>
-                    ) : workshopData ? (
-                        <form onSubmit={handleSubmit(handleRegistration)} className="space-y-6">
-                            <div className="flex item-center justify-center px-3 py-2 border border-gray-300 rounded-md shadow-sm font-bold text-gray-700 text-lg">
-                                {workshopData?.title || "Workshop"}
-                            </div>
 
-                            {formFields.map(field => (
-                                <div key={field.name}>
-                                    <Input
-                                        type={field.type}
-                                        placeholder={field.placeholder}
-                                        {...register(field.name)}
-                                        className={`block w-full ${errors[field.name] ? 'border-red-500' : ''}`}
-                                        disabled={isSubmitting}
-                                        aria-invalid={errors[field.name] ? "true" : "false"}
-                                    />
-                                    {errors[field.name] && (
-                                        <p className="mt-1 text-sm text-red-600" role="alert">{errors[field.name].message}</p>
-                                    )}
-                                </div>
-                            ))}
-
-                            <div className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-700">
-                                Shivaji College
-                            </div>
-
-                            <div>
-                                <Select 
-                                    onValueChange={(value) => setValue("year", value)}
-                                    disabled={isSubmitting}
-                                >
-                                    <SelectTrigger className={errors.year ? 'border-red-500' : ''}>
-                                        <SelectValue placeholder="Select Year" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {["1st Year", "2nd Year", "3rd Year"].map(year => (
-                                            <SelectItem key={year} value={year}>{year}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {errors.year && (
-                                    <p className="mt-1 text-sm text-red-600" role="alert">{errors.year.message}</p>
-                                )}
-                            </div>
-
-                            <div>
+                        {formFields.map(field => (
+                            <div key={field.name}>
                                 <Input
-                                    type="tel"
-                                    placeholder="Phone Number"
-                                    {...register("phone")}
-                                    className={`block w-full ${errors.phone ? 'border-red-500' : ''}`}
+                                    type={field.type}
+                                    placeholder={field.placeholder}
+                                    {...register(field.name)}
+                                    className={`block w-full ${errors[field.name] ? 'border-red-500' : ''}`}
                                     disabled={isSubmitting}
-                                    aria-invalid={errors.phone ? "true" : "false"}
+                                    aria-invalid={errors[field.name] ? "true" : "false"}
                                 />
-                                {errors.phone && (
-                                    <p className="mt-1 text-sm text-red-600" role="alert">{errors.phone.message}</p>
+                                {errors[field.name] && (
+                                    <p className="mt-1 text-sm text-red-600" role="alert">{errors[field.name].message}</p>
                                 )}
                             </div>
+                        ))}
 
-                            <div>
-                                <Textarea
-                                    placeholder="Your Query (Optional)"
-                                    {...register("query")}
-                                    className="block w-full"
-                                    disabled={isSubmitting}
-                                />
-                            </div>
-
-                            <Button
-                                type="submit"
-                                className="w-full"
-                                disabled={isSubmitting || (!isDirty && !isValid) || !isOnline}
-                            >
-                                {isSubmitting ? 'Processing...' : 'Register'}
-                            </Button>
-                        </form>
-                    ) : (
-                        <div className="text-center py-8">
-                            <p className="text-red-500 mb-4">Workshop data not available</p>
-                            <Button onClick={() => window.location.reload()} className="mx-auto">
-                                Retry
-                            </Button>
+                        <div className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-gray-700">
+                            Shivaji College
                         </div>
-                    )}
+
+                        <div>
+                            <Select 
+                                onValueChange={(value) => setValue("year", value)}
+                                disabled={isSubmitting}
+                            >
+                                <SelectTrigger className={errors.year ? 'border-red-500' : ''}>
+                                    <SelectValue placeholder="Select Year" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {["1st Year", "2nd Year", "3rd Year"].map(year => (
+                                        <SelectItem key={year} value={year}>{year}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {errors.year && (
+                                <p className="mt-1 text-sm text-red-600" role="alert">{errors.year.message}</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <Input
+                                type="tel"
+                                placeholder="Phone Number"
+                                {...register("phone")}
+                                className={`block w-full ${errors.phone ? 'border-red-500' : ''}`}
+                                disabled={isSubmitting}
+                                aria-invalid={errors.phone ? "true" : "false"}
+                            />
+                            {errors.phone && (
+                                <p className="mt-1 text-sm text-red-600" role="alert">{errors.phone.message}</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <Textarea
+                                placeholder="Your Query (Optional)"
+                                {...register("query")}
+                                className="block w-full"
+                                disabled={isSubmitting}
+                            />
+                        </div>
+
+                        <Button
+                            type="submit"
+                            className="w-full"
+                            disabled={isSubmitting || (!isDirty && !isValid) || !isOnline}
+                        >
+                            {isSubmitting ? 'Processing...' : 'Register'}
+                        </Button>
+                    </form>
                 </div>
             </div>
         </main>
     );
-} 
+}

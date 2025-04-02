@@ -55,7 +55,7 @@ export const useShareEvent = (event) => {
   const handleShare = useCallback(() => {
     if (!event) return;
 
-    const shareUrl = `${window.location.origin}/techelonsregistration?eventId=${event.id}`;
+    const shareUrl = `${window.location.origin}/techelonsregistration?preselect=${event.id || event.category || "event"}`;
     const shareTitle = `Check out this event: ${event.name} at Techelons 2025`;
 
     if (navigator.share) {

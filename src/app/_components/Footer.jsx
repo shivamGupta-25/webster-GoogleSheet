@@ -1,11 +1,10 @@
 "use client";
 import { useEffect, useState, memo, useCallback } from "react";
 import Image from "next/image";
-import { FaInstagram, FaLinkedinIn, FaTwitter, FaFacebookF, FaYoutube } from "react-icons/fa";
+import { FaInstagram, FaLinkedinIn } from "react-icons/fa";
 import { motion } from "framer-motion";
-import { fetchSiteContent } from "@/lib/utils";
 
-// Animation configurations
+// Memoize animation configurations
 const animations = {
     fadeInUp: {
         hidden: { opacity: 0, y: 30 },
@@ -17,55 +16,37 @@ const animations = {
     }
 };
 
-// Icon mapping
-const iconComponents = {
-    FaInstagram: FaInstagram,
-    FaLinkedinIn: FaLinkedinIn,
-    FaTwitter: FaTwitter,
-    FaFacebookF: FaFacebookF,
-    FaYoutube: FaYoutube
-};
-
-// Default social links as fallback
-const defaultSocialLinks = [
+// Memoized social links to prevent re-creation on each render
+const socialLinks = [
     {
         id: 'instagram',
         url: 'https://www.instagram.com/websters.shivaji/',
-        icon: 'FaInstagram',
+        icon: <FaInstagram />,
         hoverClass: 'hover:text-pink-500'
     },
     {
         id: 'linkedin',
         url: 'https://www.linkedin.com/company/websters-shivaji-college/',
-        icon: 'FaLinkedinIn',
+        icon: <FaLinkedinIn />,
         hoverClass: 'hover:text-blue-500'
     }
 ];
 
-// Social link component
-const SocialLink = memo(({ url, icon, hoverClass }) => {
-    const IconComponent = iconComponents[icon] || FaInstagram;
-    
-    return (
-        <a 
-            href={url} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className={`${hoverClass} transition transform hover:scale-110 duration-300`}
-        >
-            <IconComponent />
-        </a>
-    );
-});
+// Memoized social link component
+const SocialLink = memo(({ url, icon, hoverClass }) => (
+    <a 
+        href={url} 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className={`${hoverClass} transition transform hover:scale-110 duration-300`}
+    >
+        {icon}
+    </a>
+));
 
 SocialLink.displayName = 'SocialLink';
 
 const Footer = () => {
-    const [footerData, setFooterData] = useState({
-        email: "websters@shivaji.du.ac.in",
-        socialLinks: defaultSocialLinks,
-        logoImage: "/assets/Footer_logo.png"
-    });
     const [developerInfo, setDeveloperInfo] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -96,30 +77,6 @@ const Footer = () => {
         }
     }, []);
 
-    // Fetch footer data
-    useEffect(() => {
-        const fetchFooterData = async () => {
-            try {
-                const siteContent = await fetchSiteContent();
-                
-                if (siteContent && siteContent.footer) {
-                    setFooterData({
-                        email: siteContent.footer.email || footerData.email,
-                        socialLinks: siteContent.footer.socialLinks && siteContent.footer.socialLinks.length > 0 
-                            ? siteContent.footer.socialLinks 
-                            : footerData.socialLinks,
-                        logoImage: siteContent.footer.logoImage || footerData.logoImage
-                    });
-                }
-            } catch (error) {
-                console.error("Error fetching footer data:", error);
-            }
-        };
-        
-        fetchFooterData();
-    }, []);
-
-    // Fetch developer info
     useEffect(() => {
         const controller = fetchDeveloperInfo();
         
@@ -131,6 +88,7 @@ const Footer = () => {
         };
     }, [fetchDeveloperInfo]);
 
+    // Get current year only once
     const currentYear = new Date().getFullYear();
 
     return (
@@ -146,7 +104,7 @@ const Footer = () => {
                     <a href="/" className="flex items-center gap-2">
                         <Image
                             alt="logo"
-                            src={footerData.logoImage}
+                            src="/assets/Footer_logo.png"
                             className="h-10 w-auto brightness-110 hover:brightness-125 transition"
                             width={250}
                             height={65}
@@ -157,11 +115,11 @@ const Footer = () => {
 
                 <motion.div variants={animations.fadeInUp} className="text-lg text-white font-bold flex flex-col md:flex-row items-center gap-1">
                     <span>Contact:</span>
-                    <a href={`mailto:${footerData.email}`} className="hover:underline transition text-blue-400">{footerData.email}</a>
+                    <a href="mailto:websters@shivaji.du.ac.in" className="hover:underline transition text-blue-400">websters@shivaji.du.ac.in</a>
                 </motion.div>
 
                 <motion.div variants={animations.fadeInUp} className="flex space-x-6 text-2xl justify-center md:justify-start">
-                    {footerData.socialLinks.map(link => (
+                    {socialLinks.map(link => (
                         <SocialLink 
                             key={link.id}
                             url={link.url}
@@ -172,6 +130,7 @@ const Footer = () => {
                 </motion.div>
             </div>
 
+            {/* Credit section */}
             <motion.div variants={animations.fadeInUp} className="text-center text-sm mt-8 border-t border-gray-700 pt-4 text-gray-500">
                 <p className="text-lg">&copy; {currentYear} Websters. All rights reserved.</p>
                 {loading ? (

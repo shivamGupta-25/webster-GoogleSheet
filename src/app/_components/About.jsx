@@ -1,10 +1,9 @@
 "use client";
-import React, { memo, useState, useEffect } from "react";
+import React, { memo, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import { fetchSiteContent } from '@/lib/utils';
 
-// Animation configurations
+// Memoize animation configurations
 const animations = {
     container: {
         hidden: { opacity: 0, y: 50 },
@@ -24,7 +23,16 @@ const animations = {
     }
 };
 
-// Paragraph component
+// Memoized content paragraphs to prevent re-creation on each render
+const contentParagraphs = [
+    { id: 1, content: "<strong>Websters: The Computer Science Society of Shivaji College</strong>" },
+    { id: 2, content: "At Websters, we believe in the power of technology to shape the future, and our mission is to equip students with the knowledge, skills, and opportunities to thrive in this dynamic field. We serve as a vibrant community where students can not only deepen their understanding of computer science but also engage with cutting-edge developments in the tech world. Through a blend of academic events and hands-on activities, we aim to create an environment that sparks curiosity and encourages innovation." },
+    { id: 3, content: "Our society is led by a passionate and dedicated student council, which plays a pivotal role in curating and executing a range of events, from expert talks and coding competitions to hackathons and project showcases. These events provide students with the chance to network with industry professionals, gain insights into emerging technologies, and develop practical skills that are essential in today's competitive tech landscape." },
+    { id: 4, content: "In addition to skill-building workshops, Websters is also home to a number of collaborative projects that enable students to work together on real-world applications and tech solutions. Whether you're a budding programmer, an aspiring data scientist, or simply someone with an interest in technology, Websters offers a supportive and inspiring space for growth." },
+    { id: 5, content: "Join us as we embark on a journey of learning, collaboration, and innovation—together, we can push the boundaries of what's possible and make a lasting impact in the world of technology." }
+];
+
+// Memoized paragraph component for better performance
 const Paragraph = memo(({ html, className }) => (
     <p className={className} dangerouslySetInnerHTML={{ __html: html }} />
 ));
@@ -36,42 +44,6 @@ const About = () => {
         threshold: 0.2,
         triggerOnce: true
     });
-
-    const [aboutContent, setAboutContent] = useState({ title: "", paragraphs: [] });
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        const loadContent = async () => {
-            try {
-                const content = await fetchSiteContent();
-                if (content && content.about) {
-                    setAboutContent(content.about);
-                }
-            } catch (error) {
-                console.error('Error loading about content:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        loadContent();
-    }, []);
-
-    if (isLoading) {
-        return (
-            <section className="flex items-center justify-center px-6 mb-12 md:px-12 lg:px-20 xl:px-32">
-                <div className="text-center mt-10 md:mt-16 w-full">
-                    <div className="h-24 sm:h-32 lg:h-36 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mx-auto max-w-2xl mb-8"></div>
-                    <div className="mt-6 md:mt-8 max-w-4xl mx-auto space-y-4">
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4 mx-auto"></div>
-                    </div>
-                </div>
-            </section>
-        );
-    }
 
     return (
         <section
@@ -89,13 +61,13 @@ const About = () => {
                     className="text-6xl sm:text-8xl lg:text-9xl font-extrabold text-gray-900 dark:text-white mb-8"
                     variants={animations.title}
                 >
-                    {aboutContent.title}
+                    About Websters
                 </motion.h1>
                 <motion.div
                     className="mt-6 md:mt-8 text-gray-600 text-base md:text-lg lg:text-xl max-w-4xl mx-auto"
                     variants={animations.content}
                 >
-                    {aboutContent.paragraphs.map((paragraph) => (
+                    {contentParagraphs.map((paragraph) => (
                         <Paragraph
                             key={paragraph.id}
                             html={paragraph.content}

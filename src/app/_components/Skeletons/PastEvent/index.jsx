@@ -2,6 +2,7 @@
 
 // Re-export all skeleton components for PastEvent
 export * from './PastEventSkeletons'
+export { EventSwiper } from './EventSwiper'
 
 // Constants for consistent loading timeouts
 export const LOADING_TIMEOUT = 800

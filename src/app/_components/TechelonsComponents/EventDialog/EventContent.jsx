@@ -1,6 +1,4 @@
-// NOTE: This file was automatically updated to use fetchTechelonsData instead of importing from techelonsData directly.
-// Please review and update the component to use the async fetchTechelonsData function.
-import { memo, useMemo, useState, useEffect } from "react";
+import { memo, useMemo } from "react";
 import { 
   BookOpen, 
   Calendar, 
@@ -18,84 +16,69 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { ICON_SIZE } from "./constants";
 import { SectionHeading, InfoCard, RegistrationStatus } from "./UIComponents";
-import { fetchTechelonsData } from '@/lib/utils';
+import { FEST_DAYS } from "@/app/_data/techelonsEventsData";
 
 // Event details section
-export const EventDetails = memo(({ event, formattedDate, formattedTime, dayOfWeek }) => {
-  // Determine day display based on festDay value directly
-  const getDayDisplay = () => {
-    if (!event.festDay) return "";
-    return event.festDay === "day1" ? "Day 1" : "Day 2";
-  };
-  
-  return (
-    <InfoCard
-      icon={<Info className={ICON_SIZE} />}
-      title="Event Details"
-      className="overflow-hidden"
-    >
-      {/* Tagline - if available */}
-      {event.tagline && (
-        <div className="mb-3 text-sm italic text-primary border-l-2 border-primary pl-3 py-1">
-          "{event.tagline}"
+export const EventDetails = memo(({ event, formattedDate, formattedTime, dayOfWeek }) => (
+  <InfoCard
+    icon={<Info className={ICON_SIZE} />}
+    title="Event Details"
+    className="overflow-hidden"
+  >
+    <div className="text-sm text-muted-foreground grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Date and Time */}
+      <div className="flex items-start">
+        <Calendar className="h-4 w-4 mr-2 text-primary flex-shrink-0 mt-0.5" />
+        <div>
+          <div className="font-medium text-primary">
+            {event.festDay === FEST_DAYS.DAY_1 ? "Day 1" : "Day 2"}
+          </div>
+          <div>{formattedDate} ({dayOfWeek})</div>
+          <div>{formattedTime}</div>
+          {event.duration && (
+            <div className="flex items-center mt-1">
+              <Clock className="h-3 w-3 mr-1" />
+              <span>Duration: {event.duration}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Location */}
+      {event.venue && (
+        <div className="flex items-start">
+          <MapPin className="h-4 w-4 mr-2 text-primary flex-shrink-0 mt-0.5" />
+          <div>
+            <div className="font-medium">Location</div>
+            <div className="break-words">{event.venue}</div>
+          </div>
         </div>
       )}
-      
-      <div className="text-sm text-muted-foreground grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Date and Time */}
+
+      {/* Speaker */}
+      {event.speaker && (
         <div className="flex items-start">
-          <Calendar className="h-4 w-4 mr-2 text-primary flex-shrink-0 mt-0.5" />
+          <User className="h-4 w-4 mr-2 text-primary flex-shrink-0 mt-0.5" />
           <div>
-            <div className="font-medium text-primary">
-              {getDayDisplay()}
-            </div>
-            <div>{formattedDate} ({dayOfWeek})</div>
-            <div>{formattedTime}</div>
-            {event.duration && (
-              <div className="flex items-center mt-1">
-                <Clock className="h-3 w-3 mr-1" />
-                <span>Duration: {event.duration}</span>
-              </div>
-            )}
+            <div className="font-medium">Speaker</div>
+            <div className="break-words">{event.speaker}</div>
           </div>
         </div>
+      )}
 
-        {/* Location */}
-        {event.venue && (
-          <div className="flex items-start">
-            <MapPin className="h-4 w-4 mr-2 text-primary flex-shrink-0 mt-0.5" />
-            <div>
-              <div className="font-medium">Location</div>
-              <div className="break-words">{event.venue}</div>
-            </div>
-          </div>
-        )}
-
-        {/* Speaker */}
-        {event.speaker && (
-          <div className="flex items-start">
-            <User className="h-4 w-4 mr-2 text-primary flex-shrink-0 mt-0.5" />
-            <div>
-              <div className="font-medium">Speaker</div>
-              <div className="break-words">{event.speaker}</div>
-            </div>
-          </div>
-        )}
-
-        {/* Registration status */}
-        <div className="flex items-start">
-          <Ticket className="h-4 w-4 mr-2 text-primary flex-shrink-0 mt-0.5" />
-          <div>
-            <div className="font-medium">Registration</div>
-            <div className="flex items-center">
-              <RegistrationStatus status={event.registrationStatus} event={event} />
-            </div>
+      {/* Registration status */}
+      <div className="flex items-start">
+        <Ticket className="h-4 w-4 mr-2 text-primary flex-shrink-0 mt-0.5" />
+        <div>
+          <div className="font-medium">Registration</div>
+          <div className="flex items-center">
+            <RegistrationStatus status={event.registrationStatus} />
           </div>
         </div>
       </div>
-    </InfoCard>
-  );
-});
+    </div>
+  </InfoCard>
+));
 EventDetails.displayName = "EventDetails";
 
 // Description section
@@ -131,52 +114,6 @@ export const Rules = memo(({ rules }) => {
   );
 });
 Rules.displayName = "Rules";
-
-// Competition Structure section
-export const CompetitionStructure = memo(({ competitionStructure }) => {
-  if (!competitionStructure?.length) return null;
-  
-  return (
-    <div>
-      <SectionHeading icon={<Trophy className={ICON_SIZE} />}>Competition Structure</SectionHeading>
-      <Card className="border-blue-200/80 dark:border-blue-800/80 shadow-sm hover:shadow-md transition-all duration-300 hover:translate-y-[-2px] bg-gradient-to-br from-blue-50/90 via-indigo-50/90 to-violet-50/90 dark:from-blue-950/40 dark:via-indigo-950/40 dark:to-violet-950/40">
-        <CardContent className="p-3 sm:p-4">
-          <ol className="list-decimal pl-5 space-y-1 text-sm sm:text-base">
-            {competitionStructure.map((item, index) => (
-              <li key={index} className="hover:text-foreground transition-colors duration-200">
-                {item}
-              </li>
-            ))}
-          </ol>
-        </CardContent>
-      </Card>
-    </div>
-  );
-});
-CompetitionStructure.displayName = "CompetitionStructure";
-
-// Evaluation Criteria section
-export const EvaluationCriteria = memo(({ evaluationCriteria }) => {
-  if (!evaluationCriteria?.length) return null;
-  
-  return (
-    <div>
-      <SectionHeading icon={<BookOpen className={ICON_SIZE} />}>Evaluation Criteria</SectionHeading>
-      <Card className="border-purple-200/80 dark:border-purple-800/80 shadow-sm hover:shadow-md transition-all duration-300 hover:translate-y-[-2px] bg-gradient-to-br from-purple-50/90 via-fuchsia-50/90 to-pink-50/90 dark:from-purple-950/40 dark:via-fuchsia-950/40 dark:to-pink-950/40">
-        <CardContent className="p-3 sm:p-4">
-          <ul className="list-disc pl-5 space-y-1 text-sm sm:text-base">
-            {evaluationCriteria.map((criterion, index) => (
-              <li key={index} className="hover:text-foreground transition-colors duration-200">
-                {criterion}
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-    </div>
-  );
-});
-EvaluationCriteria.displayName = "EvaluationCriteria";
 
 // Instructions section
 export const Instructions = memo(({ instructions }) => {

@@ -1,14 +1,10 @@
-// NOTE: This file was automatically updated to use fetchTechelonsData instead of importing from techelonsData directly.
-// Please review and update the component to use the async fetchTechelonsData function.
 "use client"
 
-import { useEffect, useCallback, useMemo, memo, lazy, Suspense, useState } from "react"
+import { useEffect, useCallback, useMemo, memo, lazy, Suspense } from "react"
 import PropTypes from 'prop-types'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { fetchTechelonsData } from '@/lib/utils';
-import { getCategoryStyle } from "./constants"
+import { formatEventDateTime, getImagePath, getCategoryStyle } from "@/app/_data/techelonsEventsData"
 import { useShareEvent, useImageHandling } from "./hooks"
-import { getEffectiveRegistrationStatus, formatEventDateTime, getImagePath } from "./utils"
 
 // Lazy loaded components with appropriate chunk names
 const EventImage = lazy(() => import('./EventImage' /* webpackChunkName: "event-image" */));
@@ -19,8 +15,6 @@ import {
   EventDetails,
   Description,
   Rules,
-  CompetitionStructure,
-  EvaluationCriteria,
   Instructions,
   TeamSize,
   Prizes,
@@ -42,10 +36,6 @@ LoadingFallback.displayName = "LoadingFallback";
 
 // Main component
 const EventModal = memo(({ event, isOpen, onClose }) => {
-  // State for registration status
-  const [registrationStatus, setRegistrationStatus] = useState('closed');
-  const [isLoading, setIsLoading] = useState(false);
-
   // Custom hooks
   const { handleShare, shareSuccess } = useShareEvent(event || {});
   const {
@@ -75,48 +65,16 @@ const EventModal = memo(({ event, isOpen, onClose }) => {
     }
   }, [event?.id, isOpen, resetImage]);
 
-  // Fetch registration status when event changes
-  useEffect(() => {
-    const fetchRegistrationStatus = async () => {
-      if (!event) return;
-      
-      setIsLoading(true);
-      try {
-        const status = await getEffectiveRegistrationStatus(event);
-        setRegistrationStatus(status);
-      } catch (error) {
-        console.error('Error fetching registration status:', error);
-        setRegistrationStatus('closed');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (isOpen && event) {
-      fetchRegistrationStatus();
-    }
-  }, [event, isOpen]);
-
   // Handle registration button click
-  const handleRegister = useCallback(async () => {
+  const handleRegister = useCallback(() => {
     if (!event) return;
 
-    try {
-      // Use the already fetched registration status
-      if (registrationStatus !== 'open') {
-        // If registration is closed, don't open the registration page
-        return;
-      }
-
-      if (event.registrationLink) {
-        window.open(event.registrationLink, "_blank", "noopener,noreferrer");
-      } else {
-        window.open(`/techelonsregistration?eventId=${event.id}`, "_blank");
-      }
-    } catch (error) {
-      console.error('Error handling registration:', error);
+    if (event.registrationLink) {
+      window.open(event.registrationLink, "_blank", "noopener,noreferrer");
+    } else {
+      window.open(`/techelonsregistration?preselect=${event.id || event.category || "event"}`, "_blank");
     }
-  }, [event, registrationStatus]);
+  }, [event]);
 
   // If no event, don't render anything
   if (!event) return null;
@@ -164,8 +122,6 @@ const EventModal = memo(({ event, isOpen, onClose }) => {
                 {/* Content sections */}
                 <Description description={event.description} />
                 <Rules rules={event.rules} />
-                <CompetitionStructure competitionStructure={event.competitionStructure} />
-                <EvaluationCriteria evaluationCriteria={event.evaluationCriteria} />
                 <Instructions instructions={event.instructions} />
                 <TeamSize teamSize={event.teamSize} />
                 <Prizes prizes={event.prizes} />
@@ -180,9 +136,7 @@ const EventModal = memo(({ event, isOpen, onClose }) => {
                     event={event} 
                     handleRegister={handleRegister} 
                     handleShare={handleShare} 
-                    shareSuccess={shareSuccess}
-                    registrationStatus={registrationStatus}
-                    isLoading={isLoading}
+                    shareSuccess={shareSuccess} 
                   />
                 </Suspense>
               </div>
